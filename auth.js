@@ -38,7 +38,11 @@
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        showToast(data.error || "Something went wrong. Please try again.", "error");
+        const isRealApiError = typeof data.error === "string" && res.status !== 404;
+        showToast(
+          isRealApiError ? data.error : "The API isn't reachable right now. Please try again shortly.",
+          "error"
+        );
         return;
       }
       localStorage.setItem("ba_token", data.token);
