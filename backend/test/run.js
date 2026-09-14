@@ -6,6 +6,7 @@ process.env.JWT_SECRET = "test-secret";
 process.env.PORT = "4501";
 process.env.CORS_ORIGIN = "http://localhost:8790";
 process.env.NODE_ENV = "test";
+process.env.ADMIN_SEED_KEY = "test-seed-key";
 
 const { newDb } = require("pg-mem");
 
@@ -162,6 +163,31 @@ async function main() {
   const insightsBody = await res.json();
   check("insights returns 200", res.status === 200);
   check("insights has insight text", typeof insightsBody.insight === "string");
+
+  // --- Admin seed endpoint (used instead of Shell access on free hosting) ---
+  res = await fetch(`${BASE}/api/admin/seed`, { method: "POST" });
+  check("seed endpoint rejects missing key", res.status === 401);
+
+  res = await fetch(`${BASE}/api/admin/seed`, {
+    method: "POST",
+    headers: { "X-Seed-Key": "wrong-key" },
+  });
+  check("seed endpoint rejects wrong key", res.status === 401);
+
+  res = await fetch(`${BASE}/api/admin/seed`, {
+    method: "POST",
+    headers: { "X-Seed-Key": "test-seed-key" },
+  });
+  const seedBody = await res.json();
+  check("seed endpoint accepts correct key", res.status === 200);
+  check("seed endpoint reports a customer count", seedBody.summary?.customers > 0);
+
+  res = await fetch(`${BASE}/api/dashboard/recent-orders`, { headers: { Authorization: `Bearer ${token}` } });
+  const reseededOrders = await res.json();
+  check(
+    "orders after re-seed no longer include the pre-seed manual order",
+    !reseededOrders.orders.some((o) => o.order_number === "#1002")
+  );
 
   const failed = results.filter((r) => !r.pass);
   results.forEach((r) => console.log(`${r.pass ? "PASS" : "FAIL"} - ${r.name}`));

@@ -7,6 +7,7 @@ const cors = require("cors");
 const pool = require("./db");
 const authRoutes = require("./routes/auth");
 const dashboardRoutes = require("./routes/dashboard");
+const adminRoutes = require("./routes/admin");
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use(express.json());
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 app.use("/api/auth", authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: "Not found." });
