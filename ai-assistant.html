@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;750&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
+<script src="app-auth.js"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -34,8 +36,11 @@
       <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9"/></svg>Settings</a>
     </nav>
     <div class="side-footer">
-      <div class="avatar">AM</div>
-      <div><div class="name">Alex Morgan</div><div class="role">Operations Lead</div></div>
+      <div class="avatar" data-user-initials>AM</div>
+      <div><div class="name" data-user-name>Alex Morgan</div><div class="role" data-user-role>Operations Lead</div></div>
+      <button class="icon-btn" data-logout title="Log out" style="margin-left:auto;color:var(--slate-400);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+      </button>
     </div>
   </aside>
 
@@ -48,7 +53,7 @@
       </div>
       <div class="topbar-actions">
         <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><span class="badge"></span></button>
-        <div class="topbar-profile"><div class="avatar">AM</div></div>
+        <div class="topbar-profile"><div class="avatar" data-user-initials>AM</div></div>
       </div>
     </div>
 

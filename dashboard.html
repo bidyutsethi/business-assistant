@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;750&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
+<script src="app-auth.js"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -34,8 +36,11 @@
       <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.6-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3h0a1.7 1.7 0 001-1.6V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.6 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9v0a1.7 1.7 0 001.6 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.6 1z"/></svg>Settings</a>
     </nav>
     <div class="side-footer">
-      <div class="avatar">AM</div>
-      <div><div class="name">Alex Morgan</div><div class="role">Operations Lead</div></div>
+      <div class="avatar" data-user-initials>AM</div>
+      <div><div class="name" data-user-name>Alex Morgan</div><div class="role" data-user-role>Operations Lead</div></div>
+      <button class="icon-btn" data-logout title="Log out" style="margin-left:auto;color:var(--slate-400);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+      </button>
     </div>
   </aside>
 
@@ -49,56 +54,59 @@
       <div class="topbar-actions">
         <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><span class="badge"></span></button>
         <button class="icon-btn" aria-label="Help"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 115.83 1c0 2-3 2.5-3 4.5"/><path d="M12 17.5h.01"/></svg></button>
-        <div class="topbar-profile"><div class="avatar">AM</div></div>
+        <div class="topbar-profile"><div class="avatar" data-user-initials>AM</div></div>
       </div>
     </div>
 
     <div class="page-body">
       <div class="page-head">
         <div>
-          <h1>Good morning, Alex</h1>
+          <h1 data-user-greeting>Good morning, Alex</h1>
           <p>Here's what's happening across your business.</p>
         </div>
         <a href="ai-assistant.html" class="btn btn-primary btn-sm">Ask AI Assistant</a>
       </div>
 
+      <div id="dashError" class="error-state" hidden>
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg></div>
+        <h4>Couldn't load live data</h4>
+        <p id="dashErrorMsg">Showing sample values instead. Check that the API is running.</p>
+      </div>
+
       <div class="kpi-row">
-        <div class="kpi-card"><div class="label">Revenue</div><div class="value">$842,500</div><div class="delta up">+14.8% vs last month</div></div>
-        <div class="kpi-card"><div class="label">Orders</div><div class="value">12,482</div><div class="delta up">+6.2% vs last month</div></div>
-        <div class="kpi-card"><div class="label">Customers</div><div class="value">8,921</div><div class="delta up">+3.1% vs last month</div></div>
-        <div class="kpi-card"><div class="label">Support Tickets</div><div class="value">324</div><div class="delta down">+22% this week</div></div>
+        <div class="kpi-card"><div class="label">Revenue</div><div class="value skeleton" id="kpiRevenue" style="height:28px;">&nbsp;</div><div class="delta" id="kpiRevenueDelta"></div></div>
+        <div class="kpi-card"><div class="label">Orders</div><div class="value skeleton" id="kpiOrders" style="height:28px;">&nbsp;</div><div class="delta" id="kpiOrdersDelta"></div></div>
+        <div class="kpi-card"><div class="label">Customers</div><div class="value skeleton" id="kpiCustomers" style="height:28px;">&nbsp;</div><div class="delta" id="kpiCustomersDelta"></div></div>
+        <div class="kpi-card"><div class="label">Support Tickets</div><div class="value skeleton" id="kpiTickets" style="height:28px;">&nbsp;</div><div class="delta" id="kpiTicketsDelta"></div></div>
       </div>
 
       <div class="dash-grid">
         <div class="panel">
           <div class="panel-head"><h4>Revenue trend</h4><span>Last 6 months</span></div>
-          <svg class="line-chart" viewBox="0 0 600 160" preserveAspectRatio="none">
-            <polyline points="0,120 100,110 200,95 300,100 400,70 500,50 600,20" fill="none" stroke="#3b5bfd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-            <polyline points="0,120 100,110 200,95 300,100 400,70 500,50 600,20 600,160 0,160" fill="rgba(59,91,253,0.08)" stroke="none"/>
-          </svg>
+          <svg class="line-chart" id="revenueTrendChart" viewBox="0 0 600 160" preserveAspectRatio="none"></svg>
 
-          <div class="panel-head" style="margin-top:28px;"><h4>Recent orders</h4><span>Last 24 hours</span></div>
-          <div class="list-row"><span>#10488 — Nimbus Retail Group</span><span class="status-pill resolved">Fulfilled</span></div>
-          <div class="list-row"><span>#10487 — Harborline Logistics</span><span class="status-pill pending">Processing</span></div>
-          <div class="list-row"><span>#10486 — Meridian Health Co.</span><span class="status-pill open">New</span></div>
-          <div class="list-row"><span>#10485 — Blue Anchor Traders</span><span class="status-pill overdue">Payment overdue</span></div>
+          <div class="panel-head" style="margin-top:28px;"><h4>Recent orders</h4><span>Latest activity</span></div>
+          <div id="recentOrdersList">
+            <div class="list-row"><span class="skeleton" style="width:60%;height:14px;display:inline-block;">&nbsp;</span></div>
+            <div class="list-row"><span class="skeleton" style="width:50%;height:14px;display:inline-block;">&nbsp;</span></div>
+          </div>
         </div>
 
         <div class="panel">
           <div class="panel-head"><h4>AI Insights</h4></div>
           <div class="ai-insight-card insight" style="margin-bottom:12px;">
             <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h8l-1 8 10-12h-8l1-8z"/></svg></div>
-            <div><b>Insight</b><p>Revenue growth accelerated in the final two weeks of the month.</p></div>
+            <div><b>Insight</b><p id="insightText">Loading...</p></div>
           </div>
           <div class="ai-insight-card risk" style="margin-bottom:20px;">
             <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg></div>
-            <div><b>Risk Alert</b><p>Support volume increased 22% in the APAC region.</p></div>
+            <div><b>Risk Alert</b><p id="riskText">Loading...</p></div>
           </div>
 
-          <div class="panel-head"><h4>Pending tasks</h4><span>87 total</span></div>
-          <div class="list-row"><span>Approve refund — Order #10482</span><span class="status-pill pending">Approval</span></div>
-          <div class="list-row"><span>Review APAC support spike</span><span class="status-pill open">Open</span></div>
-          <div class="list-row"><span>Send weekly MIS report</span><span class="status-pill resolved">Scheduled</span></div>
+          <div class="panel-head"><h4>Pending tasks</h4><span id="taskCount"></span></div>
+          <div id="pendingTasksList">
+            <div class="list-row"><span class="skeleton" style="width:70%;height:14px;display:inline-block;">&nbsp;</span></div>
+          </div>
         </div>
       </div>
     </div>
@@ -107,5 +115,6 @@
 
 <div class="toast-stack" id="toastStack"></div>
 <script src="script.js"></script>
+<script src="dashboard.js"></script>
 </body>
 </html>

@@ -1,0 +1,24 @@
+databases:
+  - name: business-assistant-db
+    plan: free
+    postgresMajorVersion: "16"
+
+services:
+  - name: business-assistant-api
+    type: web
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: business-assistant-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        value: https://bidyutsethi.github.io

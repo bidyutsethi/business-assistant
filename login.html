@@ -25,7 +25,7 @@
       <h1>Welcome back</h1>
       <p class="sub">Sign in to your Business Assistant workspace.</p>
 
-      <form data-auth-form novalidate>
+      <form id="loginForm" novalidate>
         <div class="field">
           <label for="email">Work email</label>
           <input type="email" id="email" required placeholder="you@company.com">
@@ -63,6 +63,8 @@
   </div>
 </div>
 <div class="toast-stack" id="toastStack"></div>
+<script src="config.js"></script>
 <script src="script.js"></script>
+<script src="auth.js"></script>
 </body>
 </html>

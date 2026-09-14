@@ -69,41 +69,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // ---------- Login/signup form validation (frontend-only demo) ----------
-  document.querySelectorAll("form[data-auth-form]").forEach((form) => {
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      let valid = true;
-      form.querySelectorAll("input[required]").forEach((input) => {
-        const field = input.closest(".field");
-        field.classList.remove("field-error");
-        const existingError = field.querySelector(".error-msg");
-        if (existingError) existingError.remove();
-        if (!input.value.trim() || (input.type === "email" && !input.value.includes("@"))) {
-          valid = false;
-          field.classList.add("field-error");
-          const msg = document.createElement("span");
-          msg.className = "error-msg";
-          msg.textContent = input.type === "email" ? "Enter a valid email address." : "This field is required.";
-          field.appendChild(msg);
-        }
-      });
-      if (!valid) {
-        showToast("Please fix the highlighted fields.", "error");
-        return;
-      }
-      const submitBtn = form.querySelector('button[type="submit"]');
-      const originalText = submitBtn.textContent;
-      submitBtn.textContent = "Please wait...";
-      submitBtn.disabled = true;
-      setTimeout(() => {
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
-        showToast("Authentication is not connected yet in this preview.", "error");
-      }, 900);
-    });
-  });
-
   // ---------- Chat input (AI assistant page demo) ----------
   const chatForm = document.getElementById("chatForm");
   const chatWindow = document.getElementById("chatWindow");
