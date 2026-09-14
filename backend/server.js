@@ -1,7 +1,10 @@
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
+const fs = require("fs");
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
 
+const pool = require("./db");
 const authRoutes = require("./routes/auth");
 const dashboardRoutes = require("./routes/dashboard");
 
@@ -40,5 +43,18 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Something went wrong." });
 });
 
+async function ensureSchema() {
+  const schemaSql = fs.readFileSync(path.join(__dirname, "schema.sql"), "utf8");
+  await pool.query(schemaSql);
+}
+
 const port = process.env.PORT || 4000;
-app.listen(port, () => console.log(`Business Assistant API listening on port ${port}`));
+
+ensureSchema()
+  .then(() => {
+    app.listen(port, () => console.log(`Business Assistant API listening on port ${port}`));
+  })
+  .catch((err) => {
+    console.error("Failed to apply database schema on startup:", err);
+    process.exit(1);
+  });

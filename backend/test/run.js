@@ -7,8 +7,6 @@ process.env.PORT = "4501";
 process.env.CORS_ORIGIN = "http://localhost:8790";
 process.env.NODE_ENV = "test";
 
-const fs = require("fs");
-const path = require("path");
 const { newDb } = require("pg-mem");
 
 const memDb = newDb({ autoCreateForeignKeyIndices: true });
@@ -42,16 +40,16 @@ const pgAdapter = memDb.adapters.createPg();
 const pgPath = require.resolve("pg");
 require.cache[pgPath] = { id: pgPath, filename: pgPath, loaded: true, exports: pgAdapter };
 
-const schemaSql = fs.readFileSync(path.join(__dirname, "..", "schema.sql"), "utf8");
-memDb.public.none(schemaSql);
-
 const BASE = `http://localhost:${process.env.PORT}`;
 const results = [];
 const check = (name, cond) => results.push({ name, pass: !!cond });
 
 async function main() {
+  // server.js applies schema.sql itself on startup (same as it will against
+  // a real, empty Postgres database in production) — don't pre-apply it here
+  // too, so this test actually exercises that startup path.
   require("../server");
-  await new Promise((r) => setTimeout(r, 300));
+  await new Promise((r) => setTimeout(r, 500));
 
   let res = await fetch(`${BASE}/api/health`);
   check("health endpoint returns ok", res.status === 200 && (await res.json()).status === "ok");
