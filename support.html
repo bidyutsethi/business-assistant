@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Support — Business Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;750&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
+<script src="app-auth.js"></script>
+</head>
+<body data-page="support.html">
+<div class="app-shell">
+  <aside class="app-sidebar" id="appSidebar"></aside>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="font-weight:700;font-size:15px;">Support</div>
+      <div class="topbar-actions">
+        <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><span class="badge"></span></button>
+        <div class="topbar-profile"><div class="avatar" data-user-initials>AM</div></div>
+      </div>
+    </div>
+
+    <div class="page-body">
+      <div class="page-head">
+        <div>
+          <h1>Support</h1>
+          <p>Customer support tickets across every region.</p>
+        </div>
+        <button class="btn btn-primary btn-sm" id="addTicketBtn">+ New Ticket</button>
+      </div>
+
+      <div class="panel">
+        <div class="table-toolbar">
+          <div class="filter-pills" id="statusFilters">
+            <button class="filter-pill active" data-status="">All</button>
+            <button class="filter-pill" data-status="open">Open</button>
+            <button class="filter-pill" data-status="pending">Pending</button>
+            <button class="filter-pill" data-status="resolved">Resolved</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Subject</th><th>Customer</th><th>Region</th><th>Status</th><th>Opened</th><th></th></tr>
+            </thead>
+            <tbody id="ticketsBody">
+              <tr><td colspan="6"><div class="skeleton" style="height:16px;width:60%;">&nbsp;</div></td></tr>
+              <tr><td colspan="6"><div class="skeleton" style="height:16px;width:50%;">&nbsp;</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="ticketsEmpty" class="empty-state" hidden>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg></div>
+          <h4>No tickets found</h4>
+          <p>Try a different filter, or open a new ticket.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="ticketModal">
+  <div class="modal-box">
+    <h3>New Ticket</h3>
+    <form id="ticketForm">
+      <div class="field">
+        <label for="ticketSubject">Subject</label>
+        <input type="text" id="ticketSubject" required placeholder="Order status inquiry">
+      </div>
+      <div class="field">
+        <label for="ticketCustomer">Customer</label>
+        <select id="ticketCustomer" required class="status-select" style="width:100%;padding:11px 12px;"></select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="ticketCancelBtn">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm">Create Ticket</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+<script src="script.js"></script>
+<script src="app-shell.js"></script>
+<script src="support.js"></script>
+</body>
+</html>

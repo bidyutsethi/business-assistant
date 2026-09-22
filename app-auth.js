@@ -57,13 +57,18 @@
     return `Good ${part}, ${user.fullName.split(" ")[0]}`;
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    document.querySelectorAll("[data-user-name]").forEach((el) => (el.textContent = user.fullName));
-    document.querySelectorAll("[data-user-role]").forEach((el) => (el.textContent = user.role));
-    document.querySelectorAll("[data-user-initials]").forEach((el) => (el.textContent = initials(user.fullName)));
-    document.querySelectorAll("[data-user-greeting]").forEach((el) => (el.textContent = greeting()));
+  // Populates any data-user-* / data-logout hooks under `root`. Called once
+  // on DOMContentLoaded for markup already in the page, and again by
+  // app-shell.js right after it injects the sidebar (whose hooks don't
+  // exist yet at DOMContentLoaded time).
+  window.applyUserInfo = function applyUserInfo(root) {
+    root = root || document;
+    root.querySelectorAll("[data-user-name]").forEach((el) => (el.textContent = user.fullName));
+    root.querySelectorAll("[data-user-role]").forEach((el) => (el.textContent = user.role));
+    root.querySelectorAll("[data-user-initials]").forEach((el) => (el.textContent = initials(user.fullName)));
+    root.querySelectorAll("[data-user-greeting]").forEach((el) => (el.textContent = greeting()));
 
-    document.querySelectorAll("[data-logout]").forEach((btn) => {
+    root.querySelectorAll("[data-logout]").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.preventDefault();
         localStorage.removeItem("ba_token");
@@ -71,5 +76,7 @@
         window.location.href = "login.html";
       });
     });
-  });
+  };
+
+  document.addEventListener("DOMContentLoaded", () => window.applyUserInfo());
 })();

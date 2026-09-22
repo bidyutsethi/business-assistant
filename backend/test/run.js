@@ -8,38 +8,8 @@ process.env.CORS_ORIGIN = "http://localhost:8790";
 process.env.NODE_ENV = "test";
 process.env.ADMIN_SEED_KEY = "test-seed-key";
 
-const { newDb } = require("pg-mem");
-
-const memDb = newDb({ autoCreateForeignKeyIndices: true });
-
-// pg-mem only implements a small native function set. Real Postgres (and
-// Render's managed Postgres) has date_trunc/to_char natively — these are
-// test-only polyfills so we can verify the app's date logic here too.
-function truncMonth(d) {
-  const date = new Date(d);
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
-}
-for (const argType of ["timestamp", "timestamptz"]) {
-  memDb.public.registerFunction({
-    name: "date_trunc",
-    args: ["text", argType],
-    returns: argType,
-    implementation: (unit, val) => (unit === "month" ? truncMonth(val) : new Date(val)),
-  });
-  memDb.public.registerFunction({
-    name: "to_char",
-    args: [argType, "text"],
-    returns: "text",
-    implementation: (val, fmt) =>
-      fmt === "Mon" ? new Date(val).toLocaleString("en-US", { month: "short", timeZone: "UTC" }) : new Date(val).toISOString(),
-  });
-}
-
-const pgAdapter = memDb.adapters.createPg();
-
-// Redirect every `require('pg')` in the app to the in-memory adapter.
-const pgPath = require.resolve("pg");
-require.cache[pgPath] = { id: pgPath, filename: pgPath, loaded: true, exports: pgAdapter };
+const { setupTestDb } = require("./setup");
+const { pgAdapter } = setupTestDb();
 
 const BASE = `http://localhost:${process.env.PORT}`;
 const results = [];

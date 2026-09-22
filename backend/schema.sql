@@ -43,6 +43,25 @@ CREATE TABLE IF NOT EXISTS tasks (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS workflows (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  trigger_label TEXT NOT NULL,
+  action_label TEXT NOT NULL,
+  enabled BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS integrations (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  category TEXT NOT NULL, -- communication | data | business | infrastructure
+  connected BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at);
 CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
 CREATE INDEX IF NOT EXISTS idx_tickets_created_at ON support_tickets(created_at);
+CREATE INDEX IF NOT EXISTS idx_tickets_customer ON support_tickets(customer_id);

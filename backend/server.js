@@ -8,6 +8,15 @@ const pool = require("./db");
 const authRoutes = require("./routes/auth");
 const dashboardRoutes = require("./routes/dashboard");
 const adminRoutes = require("./routes/admin");
+const customersRoutes = require("./routes/customers");
+const ordersRoutes = require("./routes/orders");
+const tasksRoutes = require("./routes/tasks");
+const supportRoutes = require("./routes/support");
+const reportsRoutes = require("./routes/reports");
+const teamRoutes = require("./routes/team");
+const workflowsRoutes = require("./routes/workflows");
+const integrationsRoutes = require("./routes/integrations");
+const analyticsRoutes = require("./routes/analytics");
 
 const app = express();
 
@@ -31,6 +40,15 @@ app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 app.use("/api/auth", authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/customers", customersRoutes);
+app.use("/api/orders", ordersRoutes);
+app.use("/api/tasks", tasksRoutes);
+app.use("/api/support", supportRoutes);
+app.use("/api/reports", reportsRoutes);
+app.use("/api/team", teamRoutes);
+app.use("/api/workflows", workflowsRoutes);
+app.use("/api/integrations", integrationsRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: "Not found." });

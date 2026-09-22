@@ -21,6 +21,36 @@ function showToast(message, type = "success") {
 }
 window.showToast = showToast;
 
+// ---------- Shared line-chart renderer (dashboard, reports, analytics) ----------
+// points: array of objects; valueKey: which numeric field to plot.
+function renderLineChart(svg, points, valueKey) {
+  if (!svg) return;
+  if (!points || !points.length) {
+    svg.innerHTML = "";
+    return;
+  }
+  const values = points.map((p) => Number(p[valueKey]) || 0);
+  const max = Math.max(...values, 1);
+  const min = Math.min(...values, 0);
+  const range = max - min || 1;
+  const stepX = points.length > 1 ? 600 / (points.length - 1) : 600;
+
+  const coords = values.map((v, i) => {
+    const x = points.length > 1 ? i * stepX : 0;
+    const y = 150 - ((v - min) / range) * 140;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const line = coords.join(" ");
+  const lastX = points.length > 1 ? (points.length - 1) * stepX : 0;
+  const fill = `0,160 ${line} ${lastX.toFixed(1)},160`;
+
+  svg.innerHTML = `
+    <polyline points="${fill}" fill="rgba(59,91,253,0.08)" stroke="none"></polyline>
+    <polyline points="${line}" fill="none" stroke="#3b5bfd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>
+  `;
+}
+window.renderLineChart = renderLineChart;
+
 // ---------- Mobile nav toggle ----------
 document.addEventListener("DOMContentLoaded", () => {
   const toggle = document.querySelector(".nav-toggle");
@@ -107,27 +137,6 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
     container.appendChild(msg);
     return msg;
-  }
-
-  // ---------- MIS report generator ----------
-  const reportForm = document.getElementById("reportGenForm");
-  if (reportForm) {
-    reportForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const output = document.getElementById("reportOutput");
-      const btn = reportForm.querySelector('button[type="submit"]');
-      const originalText = btn.textContent;
-      btn.textContent = "Generating...";
-      btn.disabled = true;
-      output.querySelectorAll(".report-section, .report-output-head").forEach(el => el.style.opacity = "0.35");
-      setTimeout(() => {
-        btn.textContent = originalText;
-        btn.disabled = false;
-        output.querySelectorAll(".report-section, .report-output-head").forEach(el => el.style.opacity = "1");
-        output.scrollIntoView({ behavior: "smooth", block: "start" });
-        showToast("Report generated from sample data.", "success");
-      }, 1000);
-    });
   }
 
   document.querySelectorAll("[data-export]").forEach((btn) => {

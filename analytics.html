@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Analytics — Business Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;750&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
+<script src="app-auth.js"></script>
+</head>
+<body data-page="analytics.html">
+<div class="app-shell">
+  <aside class="app-sidebar" id="appSidebar"></aside>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="font-weight:700;font-size:15px;">Analytics</div>
+      <div class="topbar-actions">
+        <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><span class="badge"></span></button>
+        <div class="topbar-profile"><div class="avatar" data-user-initials>AM</div></div>
+      </div>
+    </div>
+
+    <div class="page-body">
+      <div class="page-head">
+        <div>
+          <h1>Analytics</h1>
+          <p>Trends across revenue, orders, customers and support — computed from live data.</p>
+        </div>
+      </div>
+
+      <div id="analyticsError" class="error-state" hidden>
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg></div>
+        <h4>Couldn't load analytics</h4>
+        <p id="analyticsErrorMsg">Could not reach the API.</p>
+      </div>
+
+      <div id="analyticsContent">
+        <div class="mis-charts">
+          <div class="panel">
+            <div class="panel-head"><h4>Revenue trend</h4><span>Last 6 months</span></div>
+            <svg class="line-chart" id="revenueTrendChart" viewBox="0 0 600 160" preserveAspectRatio="none"></svg>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h4>Orders by status</h4></div>
+            <ul class="donut-legend" id="ordersByStatusList"></ul>
+          </div>
+        </div>
+
+        <div class="mis-charts" style="margin-top:16px;">
+          <div class="panel">
+            <div class="panel-head"><h4>Customer growth</h4><span>Cumulative, last 6 months</span></div>
+            <svg class="line-chart" id="customerGrowthChart" viewBox="0 0 600 160" preserveAspectRatio="none"></svg>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h4>Revenue by region</h4><span>Last 6 months</span></div>
+            <ul class="donut-legend" id="revenueByRegionList"></ul>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:16px;">
+          <div class="panel-head"><h4>Support ticket volume</h4><span>Last 30 days</span></div>
+          <svg class="line-chart" id="ticketTrendChart" viewBox="0 0 600 160" preserveAspectRatio="none"></svg>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+<script src="script.js"></script>
+<script src="app-shell.js"></script>
+<script src="analytics.js"></script>
+</body>
+</html>

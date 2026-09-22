@@ -608,6 +608,31 @@ section { position: relative; }
 .status-pill.resolved { background: var(--success-bg); color: var(--success); }
 .status-pill.overdue { background: var(--danger-bg); color: var(--danger); }
 
+/* Data tables (customers, orders, tasks, support, team) */
+.table-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; gap: 12px; flex-wrap: wrap; }
+.filter-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.filter-pill { font-size: 12.5px; padding: 7px 14px; border-radius: 100px; border: var(--border-light); color: var(--navy-700); background: #fff; }
+.filter-pill.active { background: var(--navy-900); color: #fff; border-color: var(--navy-900); }
+.table-wrap { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.data-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--slate-400); font-weight: 700; padding: 10px 14px; border-bottom: 1px solid #eef0f6; white-space: nowrap; }
+.data-table td { padding: 12px 14px; border-bottom: 1px solid #eef0f6; color: var(--navy-800); vertical-align: middle; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover td { background: var(--off-white); }
+.table-actions { display: flex; gap: 4px; justify-content: flex-end; }
+.table-actions button { background: none; border: none; padding: 7px; border-radius: var(--radius-sm); color: var(--slate-400); display: flex; }
+.table-actions button svg { width: 15px; height: 15px; }
+.table-actions button:hover { background: var(--off-white); color: var(--navy-800); }
+.table-actions button.danger:hover { color: var(--danger); background: var(--danger-bg); }
+.status-select { border: 1px solid #dde1ec; border-radius: var(--radius-sm); padding: 5px 8px; font-size: 12.5px; background: #fff; color: var(--navy-800); }
+.toggle-switch { position: relative; width: 40px; height: 22px; border-radius: 100px; background: #d7dbe6; border: none; flex-shrink: 0; cursor: pointer; transition: background var(--transition); }
+.toggle-switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform var(--transition); box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+.toggle-switch.on { background: var(--accent); }
+.toggle-switch.on::after { transform: translateX(18px); }
+.modal-box h3 { font-size: 17px; font-weight: 650; margin-bottom: 18px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
+.text-muted { color: var(--slate-400); }
+
 /* Skeleton loader */
 .skeleton { background: linear-gradient(90deg, #eceef4 25%, #f5f6fa 37%, #eceef4 63%); background-size: 400% 100%; animation: shimmer 1.4s ease infinite; border-radius: var(--radius-sm); }
 @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }

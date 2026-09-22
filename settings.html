@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Settings — Business Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;750&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
+<script src="app-auth.js"></script>
+</head>
+<body data-page="settings.html">
+<div class="app-shell">
+  <aside class="app-sidebar" id="appSidebar"></aside>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="font-weight:700;font-size:15px;">Settings</div>
+      <div class="topbar-actions">
+        <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><span class="badge"></span></button>
+        <div class="topbar-profile"><div class="avatar" data-user-initials>AM</div></div>
+      </div>
+    </div>
+
+    <div class="page-body" style="max-width:640px;">
+      <div class="page-head">
+        <div>
+          <h1>Settings</h1>
+          <p>Manage your profile and account security.</p>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h3 style="font-size:15px;font-weight:650;margin-bottom:18px;">Profile</h3>
+        <form id="profileForm">
+          <div class="field">
+            <label for="settingsFullName">Full name</label>
+            <input type="text" id="settingsFullName" required>
+          </div>
+          <div class="field">
+            <label for="settingsCompany">Company</label>
+            <input type="text" id="settingsCompany">
+          </div>
+          <div class="field">
+            <label for="settingsEmail">Email</label>
+            <input type="email" id="settingsEmail" disabled style="background:var(--off-white);color:var(--slate-400);">
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm">Save Profile</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h3 style="font-size:15px;font-weight:650;margin-bottom:18px;">Change Password</h3>
+        <form id="passwordForm">
+          <div class="field">
+            <label for="currentPassword">Current password</label>
+            <input type="password" id="currentPassword" required>
+          </div>
+          <div class="field">
+            <label for="newPassword">New password</label>
+            <input type="password" id="newPassword" required minlength="8">
+          </div>
+          <button type="submit" class="btn btn-secondary btn-sm">Update Password</button>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+<script src="script.js"></script>
+<script src="app-shell.js"></script>
+<script src="settings.js"></script>
+</body>
+</html>

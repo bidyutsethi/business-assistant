@@ -24,6 +24,53 @@ const CUSTOMER_NAMES = [
   "Northgate Professional Services", "Aurelia Consulting", "Pacific Rim Apparel",
 ];
 
+const WORKFLOWS = [
+  {
+    name: "Customer complaint handling",
+    description:
+      "Customer submits a complaint, AI understands the issue, creates a support ticket, checks order data, responds to the customer, and escalates if necessary.",
+    trigger: "Complaint submitted",
+    action: "Create ticket + respond",
+  },
+  {
+    name: "Sales performance reporting",
+    description:
+      "When sales data updates, analyse performance, generate an MIS report, identify unusual trends, and notify management.",
+    trigger: "Sales data updated",
+    action: "Generate MIS report",
+  },
+  {
+    name: "Appointment booking",
+    description:
+      "Customer requests an appointment, availability is checked, the appointment is booked, the database is updated, and a confirmation is sent.",
+    trigger: "Appointment requested",
+    action: "Book + confirm",
+  },
+  {
+    name: "Overdue payment follow-up",
+    description: "When an order's payment becomes overdue, send a reminder and flag the account for review.",
+    trigger: "Order marked overdue",
+    action: "Send reminder",
+  },
+];
+
+const INTEGRATIONS = [
+  { name: "WhatsApp", category: "communication" },
+  { name: "Email", category: "communication" },
+  { name: "Slack", category: "communication" },
+  { name: "Microsoft Teams", category: "communication" },
+  { name: "MySQL", category: "data" },
+  { name: "PostgreSQL", category: "data" },
+  { name: "Excel", category: "data" },
+  { name: "CSV", category: "data" },
+  { name: "CRM", category: "business" },
+  { name: "ERP", category: "business" },
+  { name: "Helpdesk", category: "business" },
+  { name: "Calendar", category: "business" },
+  { name: "REST APIs", category: "infrastructure" },
+  { name: "Webhooks", category: "infrastructure" },
+];
+
 const TASK_TITLES = [
   { title: "Approve refund — Order #10482", status: "approval" },
   { title: "Review APAC support spike", status: "open" },
@@ -107,6 +154,28 @@ async function seedDatabase() {
 
   for (const t of TASK_TITLES) {
     await pool.query(`INSERT INTO tasks (title, status) VALUES ($1, $2)`, [t.title, t.status]);
+  }
+
+  // Workflows/integrations are reference data users can toggle — seed once,
+  // don't wipe their state on every re-seed of the transactional tables.
+  const workflowCount = await pool.query(`SELECT COUNT(*)::int AS count FROM workflows`);
+  if (workflowCount.rows[0].count === 0) {
+    for (const w of WORKFLOWS) {
+      await pool.query(
+        `INSERT INTO workflows (name, description, trigger_label, action_label, enabled) VALUES ($1, $2, $3, $4, true)`,
+        [w.name, w.description, w.trigger, w.action]
+      );
+    }
+  }
+
+  const integrationCount = await pool.query(`SELECT COUNT(*)::int AS count FROM integrations`);
+  if (integrationCount.rows[0].count === 0) {
+    for (const i of INTEGRATIONS) {
+      await pool.query(`INSERT INTO integrations (name, category, connected) VALUES ($1, $2, false)`, [
+        i.name,
+        i.category,
+      ]);
+    }
   }
 
   return {

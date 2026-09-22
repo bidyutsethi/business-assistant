@@ -34,32 +34,6 @@
     return div.innerHTML;
   }
 
-  function renderTrendChart(svg, trend) {
-    if (!trend.length) {
-      svg.innerHTML = "";
-      return;
-    }
-    const values = trend.map((t) => t.revenue);
-    const max = Math.max(...values, 1);
-    const min = Math.min(...values, 0);
-    const range = max - min || 1;
-    const stepX = trend.length > 1 ? 600 / (trend.length - 1) : 600;
-
-    const points = trend.map((t, i) => {
-      const x = trend.length > 1 ? i * stepX : 0;
-      const y = 150 - ((t.revenue - min) / range) * 140;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    });
-    const line = points.join(" ");
-    const lastX = trend.length > 1 ? (trend.length - 1) * stepX : 0;
-    const fill = `0,160 ${line} ${lastX.toFixed(1)},160`;
-
-    svg.innerHTML = `
-      <polyline points="${fill}" fill="rgba(59,91,253,0.08)" stroke="none"></polyline>
-      <polyline points="${line}" fill="none" stroke="#3b5bfd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>
-    `;
-  }
-
   function renderRecentOrders(container, orders) {
     if (!orders.length) {
       container.innerHTML = '<div class="list-row"><span style="color:var(--slate-400)">No orders yet.</span></div>';
@@ -116,7 +90,7 @@
       ticketsEl.classList.remove("skeleton");
       setDelta(document.getElementById("kpiTicketsDelta"), summary.supportGrowthPct, "this week");
 
-      renderTrendChart(document.getElementById("revenueTrendChart"), trendRes.trend);
+      renderLineChart(document.getElementById("revenueTrendChart"), trendRes.trend, "revenue");
       renderRecentOrders(document.getElementById("recentOrdersList"), ordersRes.orders);
       renderTasks(document.getElementById("pendingTasksList"), tasksRes.tasks);
       document.getElementById("taskCount").textContent = `${tasksRes.tasks.length} shown`;

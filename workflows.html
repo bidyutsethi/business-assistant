@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Workflows — Business Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;750&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
+<script src="app-auth.js"></script>
+</head>
+<body data-page="workflows.html">
+<div class="app-shell">
+  <aside class="app-sidebar" id="appSidebar"></aside>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="font-weight:700;font-size:15px;">Workflows</div>
+      <div class="topbar-actions">
+        <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><span class="badge"></span></button>
+        <div class="topbar-profile"><div class="avatar" data-user-initials>AM</div></div>
+      </div>
+    </div>
+
+    <div class="page-body">
+      <div class="page-head">
+        <div>
+          <h1>Workflows</h1>
+          <p>Automation rules your team has defined. Toggle any rule on or off.</p>
+        </div>
+      </div>
+
+      <div id="workflowsList" style="display:flex;flex-direction:column;gap:14px;">
+        <div class="panel skeleton" style="height:100px;"></div>
+        <div class="panel skeleton" style="height:100px;"></div>
+      </div>
+      <p style="font-size:12.5px;color:var(--slate-400);margin-top:16px;">These rules describe intended automations. Actually executing them (e.g. auto-creating tickets from incoming complaints) needs an event/trigger engine that isn't connected yet — toggling here only saves the on/off state.</p>
+    </div>
+  </main>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+<script src="script.js"></script>
+<script src="app-shell.js"></script>
+<script src="workflows.js"></script>
+</body>
+</html>

@@ -86,4 +86,38 @@ router.get("/me", requireAuth, async (req, res) => {
   res.json({ user: publicUser(user) });
 });
 
+router.put("/me", requireAuth, async (req, res) => {
+  const { fullName, company } = req.body || {};
+  if (!fullName || !fullName.trim()) {
+    return res.status(400).json({ error: "Full name is required." });
+  }
+  const result = await pool.query(
+    `UPDATE users SET full_name = $1, company = $2 WHERE id = $3
+     RETURNING id, full_name, company, email, role`,
+    [fullName.trim(), company ? company.trim() : null, req.userId]
+  );
+  res.json({ user: publicUser(result.rows[0]) });
+});
+
+router.put("/password", requireAuth, async (req, res) => {
+  const { currentPassword, newPassword } = req.body || {};
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: "Current and new password are required." });
+  }
+  if (String(newPassword).length < 8) {
+    return res.status(400).json({ error: "New password must be at least 8 characters." });
+  }
+
+  const result = await pool.query("SELECT * FROM users WHERE id = $1", [req.userId]);
+  const user = result.rows[0];
+  if (!user) return res.status(404).json({ error: "User not found." });
+
+  const valid = await bcrypt.compare(currentPassword, user.password_hash);
+  if (!valid) return res.status(401).json({ error: "Current password is incorrect." });
+
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  await pool.query("UPDATE users SET password_hash = $1 WHERE id = $2", [passwordHash, req.userId]);
+  res.json({ status: "updated" });
+});
+
 module.exports = router;

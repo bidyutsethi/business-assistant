@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Customers — Business Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;750&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
+<script src="app-auth.js"></script>
+</head>
+<body data-page="customers.html">
+<div class="app-shell">
+  <aside class="app-sidebar" id="appSidebar"></aside>
+
+  <main class="app-main">
+    <div class="app-topbar">
+      <div style="font-weight:700;font-size:15px;">Customers</div>
+      <div class="topbar-actions">
+        <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><span class="badge"></span></button>
+        <div class="topbar-profile"><div class="avatar" data-user-initials>AM</div></div>
+      </div>
+    </div>
+
+    <div class="page-body">
+      <div class="page-head">
+        <div>
+          <h1>Customers</h1>
+          <p>Every customer on record, with their order history and total spend.</p>
+        </div>
+        <button class="btn btn-primary btn-sm" id="addCustomerBtn">+ Add Customer</button>
+      </div>
+
+      <div class="panel">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Name</th><th>Region</th><th>Orders</th><th>Total spend</th><th>Customer since</th><th></th></tr>
+            </thead>
+            <tbody id="customersBody">
+              <tr><td colspan="6"><div class="skeleton" style="height:16px;width:60%;">&nbsp;</div></td></tr>
+              <tr><td colspan="6"><div class="skeleton" style="height:16px;width:50%;">&nbsp;</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="customersEmpty" class="empty-state" hidden>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+          <h4>No customers yet</h4>
+          <p>Add your first customer to start tracking orders and support history.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="customerModal">
+  <div class="modal-box">
+    <h3 id="customerModalTitle">Add Customer</h3>
+    <form id="customerForm">
+      <input type="hidden" id="customerId">
+      <div class="field">
+        <label for="customerName">Customer name</label>
+        <input type="text" id="customerName" required placeholder="Acme International">
+      </div>
+      <div class="field">
+        <label for="customerRegion">Region</label>
+        <select id="customerRegion" class="status-select" style="width:100%;padding:11px 12px;">
+          <option value="North America">North America</option>
+          <option value="Europe">Europe</option>
+          <option value="APAC">APAC</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="customerCancelBtn">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm">Save Customer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+<script src="script.js"></script>
+<script src="app-shell.js"></script>
+<script src="customers.js"></script>
+</body>
+</html>
