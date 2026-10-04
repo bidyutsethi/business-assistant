@@ -62,6 +62,12 @@
   document.addEventListener("DOMContentLoaded", () => {
     const loginForm = document.getElementById("loginForm");
     if (loginForm) {
+      // No email service is configured, so resets go through an admin.
+      document.getElementById("forgotLink").addEventListener("click", (e) => {
+        e.preventDefault();
+        document.getElementById("forgotNote").hidden = false;
+      });
+
       loginForm.addEventListener("submit", (e) => {
         e.preventDefault();
         clearFieldErrors(loginForm);

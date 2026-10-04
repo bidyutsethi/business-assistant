@@ -35,18 +35,33 @@
         <div class="table-wrap">
           <table class="data-table">
             <thead>
-              <tr><th>Name</th><th>Email</th><th>Company</th><th>Role</th><th>Joined</th></tr>
+              <tr><th>Name</th><th>Email</th><th>Company</th><th>Role</th><th>Access</th><th>Joined</th><th></th></tr>
             </thead>
             <tbody id="teamBody">
-              <tr><td colspan="5"><div class="skeleton" style="height:16px;width:60%;">&nbsp;</div></td></tr>
-              <tr><td colspan="5"><div class="skeleton" style="height:16px;width:50%;">&nbsp;</div></td></tr>
+              <tr><td colspan="7"><div class="skeleton" style="height:16px;width:60%;">&nbsp;</div></td></tr>
+              <tr><td colspan="7"><div class="skeleton" style="height:16px;width:50%;">&nbsp;</div></td></tr>
             </tbody>
           </table>
         </div>
       </div>
-      <p style="font-size:12.5px;color:var(--slate-400);margin-top:14px;">This workspace doesn't yet separate accounts by company — every signed-up user appears here. Inviting teammates by email isn't wired up yet (it would need an email service configured).</p>
+      <p style="font-size:12.5px;color:var(--slate-400);margin-top:14px;"><b>Admins</b> manage the team, <b>Members</b> can add and edit data, and <b>Viewers</b> can only look. This workspace doesn't yet separate accounts by company — every signed-up user appears here and joins as a Member.</p>
+      <p id="teamAdminNote" hidden style="font-size:12.5px;color:var(--slate-400);margin-top:8px;">Only an admin can change access, reset passwords or remove people.</p>
     </div>
   </main>
+</div>
+
+<div class="modal-overlay" id="resetModal">
+  <div class="modal-box">
+    <h3>Temporary password</h3>
+    <p style="font-size:13.5px;color:var(--navy-700);line-height:1.6;margin-bottom:14px;">Send this to <b id="resetName"></b>. It is shown only once. They should sign in with it and then set their own password in Settings.</p>
+    <div class="field" style="margin-bottom:0;">
+      <input type="text" id="resetPassword" readonly onclick="this.select()">
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary btn-sm" id="resetCopyBtn">Copy</button>
+      <button type="button" class="btn btn-primary btn-sm" id="resetCloseBtn">Done</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast-stack" id="toastStack"></div>

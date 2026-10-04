@@ -39,6 +39,58 @@
 
   const RANGE_LABELS = { this_month: "This month", last_month: "Last month", last_quarter: "Last quarter" };
 
+  // The report currently on screen, kept for the export buttons.
+  let current = null;
+
+  function reportCsv({ report, range }) {
+    const pct = (n) => `${n >= 0 ? "+" : ""}${n.toFixed(1)}%`;
+    const k = report.kpis;
+    return toCsv([
+      [`${RANGE_LABELS[range]} Management Report`],
+      ["Region", report.region],
+      ["Generated", new Date(report.generatedAt).toLocaleString("en-US")],
+      [],
+      ["Executive Summary"],
+      [report.executiveSummary],
+      [],
+      ["KPI", "Value", "Change vs prior period"],
+      ["Revenue (USD)", k.revenue, pct(k.revenueGrowthPct)],
+      ["Orders", k.orders, pct(k.ordersGrowthPct)],
+      ["Active Customers", k.customers, ""],
+      ["Support Tickets", k.tickets, pct(k.ticketsGrowthPct)],
+      [],
+      ["Performance Analysis"],
+      [report.performanceAnalysis],
+      [],
+      ["Week starting", "Revenue (USD)"],
+      ...report.trend.map((t) => [t.week, t.revenue]),
+      [],
+      ["Key Risks"],
+      ...report.risks.map((r) => [r]),
+      [],
+      ["Recommendations"],
+      ...report.recommendations.map((r) => [r]),
+    ]);
+  }
+
+  function shareUrl({ range, region }) {
+    const url = new URL(window.location.href);
+    url.search = "";
+    url.searchParams.set("range", range);
+    if (region) url.searchParams.set("region", region);
+    return url.toString();
+  }
+
+  // Applies ?range=&region= from a shared link to the form, if valid.
+  function applyUrlFilters() {
+    const params = new URLSearchParams(window.location.search);
+    for (const [param, id] of [["range", "reportRange"], ["region", "reportRegion"]]) {
+      const select = document.getElementById(id);
+      const value = params.get(param);
+      if (value && [...select.options].some((o) => o.value === value)) select.value = value;
+    }
+  }
+
   async function generate() {
     const range = document.getElementById("reportRange").value;
     const region = document.getElementById("reportRegion").value;
@@ -66,9 +118,11 @@
       renderList(document.getElementById("reportRisks"), report.risks, RISK_ICON, "var(--danger)");
       renderList(document.getElementById("reportRecommendations"), report.recommendations, REC_ICON, "var(--accent)");
 
+      current = { report, range, region };
       output.hidden = false;
       output.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (err) {
+      current = null;
       output.hidden = true;
       emptyState.hidden = false;
       document.getElementById("reportEmptyMsg").textContent = err.message || "Could not reach the API.";
@@ -85,6 +139,29 @@
       e.preventDefault();
       generate();
     });
+
+    // The browser's print dialog offers "Save as PDF"; the print stylesheet
+    // strips the page down to just the report.
+    document.getElementById("exportPdfBtn").addEventListener("click", () => window.print());
+
+    document.getElementById("exportCsvBtn").addEventListener("click", () => {
+      if (!current) return;
+      const date = current.report.generatedAt.slice(0, 10);
+      // The BOM makes Excel read the file as UTF-8.
+      downloadFile(`mis-report-${current.range}-${date}.csv`, "﻿" + reportCsv(current), "text/csv;charset=utf-8");
+    });
+
+    document.getElementById("shareReportBtn").addEventListener("click", async () => {
+      if (!current) return;
+      try {
+        await navigator.clipboard.writeText(shareUrl(current));
+        showToast("Link copied. Teammates need to sign in to open it.", "success");
+      } catch (err) {
+        showToast("Couldn't copy the link.", "error");
+      }
+    });
+
+    applyUrlFilters();
     generate();
   });
 })();

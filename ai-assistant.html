@@ -29,90 +29,38 @@
     </div>
 
     <div class="assistant-shell">
-      <!-- Chat history -->
+      <!-- Quick questions -->
       <aside class="chat-sidebar">
-        <button class="btn btn-secondary btn-block btn-sm" style="margin-bottom:16px;">+ New conversation</button>
-        <div class="chat-history-item active">Monthly revenue comparison</div>
-        <div class="chat-history-item">Which region needs attention?</div>
-        <div class="chat-history-item">Top 5 products this month</div>
-        <div class="chat-history-item">Customers with pending payments</div>
-        <div class="chat-history-item">Unusual sales activity review</div>
-        <div class="chat-history-item">Weekly management summary</div>
+        <button class="btn btn-secondary btn-block btn-sm" id="newChatBtn" style="margin-bottom:16px;">+ New conversation</button>
+        <span class="chat-sidebar-label">Try asking</span>
+        <div class="chat-history-item" data-ask="What is our revenue this month?">Monthly revenue comparison</div>
+        <div class="chat-history-item" data-ask="Which region needs attention?">Which region needs attention?</div>
+        <div class="chat-history-item" data-ask="Who are our top customers?">Top customers by spend</div>
+        <div class="chat-history-item" data-ask="Show customers with pending payments.">Customers with pending payments</div>
+        <div class="chat-history-item" data-ask="Identify unusual sales activity.">Unusual sales activity review</div>
+        <div class="chat-history-item" data-ask="What tasks need approval?">Tasks waiting for approval</div>
       </aside>
 
       <!-- Chat main -->
       <section class="chat-main">
         <div class="chat-toolbar">
-          <select aria-label="Data source">
-            <option>All connected data sources</option>
-            <option>Sales &amp; Orders (PostgreSQL)</option>
-            <option>Customer data (CRM)</option>
-            <option>Support tickets (Helpdesk)</option>
-          </select>
+          <span style="font-size:13px;color:var(--slate-400);">Answers come from your live orders, customers, support tickets and tasks.</span>
           <span style="margin-left:auto;display:flex;gap:8px;">
-            <button class="icon-btn" title="Upload file" style="border:1px solid #e7e9f2;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5M12 3v12"/></svg></button>
-            <button class="icon-btn" title="Export report" data-export="Report" style="border:1px solid #e7e9f2;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg></button>
+            <button class="icon-btn" id="exportChatBtn" title="Download this conversation" style="border:1px solid #e7e9f2;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg></button>
           </span>
         </div>
 
-        <div class="chat-window" id="chatWindow">
-          <div class="msg ai">
-            <div class="msg-avatar">AI</div>
-            <div class="msg-bubble">Good morning, Alex. I have access to your sales, customer and support data. What would you like to know?</div>
-          </div>
-
-          <div class="msg user">
-            <div class="msg-avatar">YOU</div>
-            <div class="msg-bubble">What were our top 5 products this month?</div>
-          </div>
-          <div class="msg ai">
-            <div class="msg-avatar">AI</div>
-            <div class="msg-bubble">
-              Here are your top 5 products by revenue this month:
-              <div class="stat-line">
-                <div>1. Enterprise Suite<strong>$186,200</strong></div>
-                <div>2. Pro Analytics<strong>$142,900</strong></div>
-              </div>
-              <div class="stat-line">
-                <div>3. Support Add-on<strong>$98,400</strong></div>
-                <div>4. Workflow Pack<strong>$74,100</strong></div>
-              </div>
-              Enterprise Suite alone accounts for 22% of total monthly revenue.
-              <div class="msg-actions">
-                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copy</button>
-                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>Export</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="msg user">
-            <div class="msg-avatar">YOU</div>
-            <div class="msg-bubble">Refund order #10482.</div>
-          </div>
-          <div class="msg ai">
-            <div class="msg-avatar">AI</div>
-            <div class="msg-bubble">I found order #10482 for $249.00. This action will issue a refund to the customer.</div>
-          </div>
-          <div class="confirm-card">
-            <span class="tag">Confirmation required</span>
-            <p>Refund $249.00 for order #10482 (Blue Anchor Traders)?</p>
-            <div class="confirm-actions">
-              <button class="btn btn-approve btn-sm confirm-yes">Confirm Refund</button>
-              <button class="btn btn-reject btn-sm confirm-no">Cancel</button>
-            </div>
-          </div>
-        </div>
+        <div class="chat-window" id="chatWindow"></div>
 
         <div class="suggestion-row">
-          <span class="suggestion-chip">"Generate the monthly MIS report."</span>
-          <span class="suggestion-chip">"Why are support tickets increasing?"</span>
-          <span class="suggestion-chip">"Show customers with pending payments."</span>
-          <span class="suggestion-chip">"Identify unusual sales activity."</span>
+          <span class="suggestion-chip" data-ask="Generate the monthly MIS report.">"Generate the monthly MIS report."</span>
+          <span class="suggestion-chip" data-ask="Why are support tickets increasing?">"Why are support tickets increasing?"</span>
+          <span class="suggestion-chip" data-ask="Show customers with pending payments.">"Show customers with pending payments."</span>
+          <span class="suggestion-chip" data-ask="Identify unusual sales activity.">"Identify unusual sales activity."</span>
         </div>
 
         <form class="chat-inputbar" id="chatForm">
-          <button type="button" class="icon-btn" title="Upload file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a5 5 0 01-7.07-7.07l9.19-9.19a3.5 3.5 0 014.95 4.95l-9.2 9.19a1.5 1.5 0 01-2.12-2.12l8.49-8.48"/></svg></button>
-          <input type="text" placeholder="Ask about revenue, customers, tasks, or trends...">
+          <input type="text" maxlength="500" placeholder="Ask about revenue, customers, orders, tickets or tasks...">
           <button type="submit" class="send-btn" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
         </form>
       </section>
@@ -123,5 +71,6 @@
 <div class="toast-stack" id="toastStack"></div>
 <script src="script.js"></script>
 <script src="app-shell.js"></script>
+<script src="assistant.js"></script>
 </body>
 </html>

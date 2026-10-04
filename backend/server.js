@@ -17,6 +17,7 @@ const teamRoutes = require("./routes/team");
 const workflowsRoutes = require("./routes/workflows");
 const integrationsRoutes = require("./routes/integrations");
 const analyticsRoutes = require("./routes/analytics");
+const assistantRoutes = require("./routes/assistant");
 
 const app = express();
 
@@ -49,6 +50,7 @@ app.use("/api/team", teamRoutes);
 app.use("/api/workflows", workflowsRoutes);
 app.use("/api/integrations", integrationsRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/assistant", assistantRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: "Not found." });
@@ -66,6 +68,16 @@ app.use((err, req, res, next) => {
 async function ensureSchema() {
   const schemaSql = fs.readFileSync(path.join(__dirname, "schema.sql"), "utf8");
   await pool.query(schemaSql);
+
+  // Workspaces created before access levels existed have no admin — hand it
+  // to the earliest account so someone can manage the team.
+  const admins = await pool.query(`SELECT id FROM users WHERE access_level = 'admin' LIMIT 1`);
+  if (!admins.rows.length) {
+    const first = await pool.query(`SELECT id FROM users ORDER BY id ASC LIMIT 1`);
+    if (first.rows.length) {
+      await pool.query(`UPDATE users SET access_level = 'admin' WHERE id = $1`, [first.rows[0].id]);
+    }
+  }
 }
 
 const port = process.env.PORT || 4000;

@@ -696,6 +696,12 @@ section { position: relative; }
 .confirm-card .tag { font-size: 11.5px; font-weight: 700; color: var(--warning); text-transform: uppercase; letter-spacing: 0.03em; }
 .confirm-card p { font-size: 13.5px; color: var(--navy-800); margin: 8px 0 12px; line-height: 1.5; }
 .confirm-actions { display: flex; gap: 8px; }
+.chat-window .msg-bubble { white-space: pre-wrap; }
+.stat-list { margin-top: 12px; border-top: var(--border-light); white-space: normal; }
+.stat-row { display: flex; justify-content: space-between; gap: 24px; padding: 8px 0; border-bottom: var(--border-light); font-size: 13.5px; color: var(--navy-700); }
+.stat-row strong { color: var(--navy-900); font-weight: 650; white-space: nowrap; }
+.msg-link { display: inline-block; margin-top: 12px; font-size: 13px; font-weight: 600; color: var(--accent); }
+.chat-sidebar-label { display: block; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--slate-400); padding: 4px 12px 8px; }
 
 /* =====================================================
    MIS REPORT GENERATOR PAGE
@@ -770,4 +776,17 @@ section { position: relative; }
   .flow-arrow { transform: rotate(90deg); padding: 0; }
   .hero { padding: 140px 0 72px; }
   .security-grid { grid-template-columns: 1fr; }
+}
+
+/* ---------- Print (MIS report "Export PDF") ---------- */
+@media print {
+  .app-sidebar, .app-topbar, .toast-stack, .report-actions,
+  body[data-page="mis-report.html"] .page-head,
+  body[data-page="mis-report.html"] .page-body > .panel { display: none !important; }
+  .app-shell { display: block; }
+  .app-main { background: #fff; min-height: 0; }
+  .page-body { padding: 0; }
+  .report-output { border: none; }
+  .report-section, .kpi-card { break-inside: avoid; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

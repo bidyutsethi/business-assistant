@@ -17,6 +17,7 @@ function publicUser(user) {
     company: user.company,
     email: user.email,
     role: user.role,
+    accessLevel: user.access_level,
   };
 }
 
@@ -37,12 +38,17 @@ router.post("/signup", async (req, res) => {
     return res.status(409).json({ error: "An account with this email already exists." });
   }
 
+  // The very first account owns the workspace; everyone after joins as a
+  // regular member until an admin changes their access.
+  const userCount = await pool.query("SELECT COUNT(*)::int AS count FROM users");
+  const accessLevel = userCount.rows[0].count === 0 ? "admin" : "member";
+
   const passwordHash = await bcrypt.hash(password, 10);
   const result = await pool.query(
-    `INSERT INTO users (full_name, company, email, password_hash)
-     VALUES ($1, $2, $3, $4)
-     RETURNING id, full_name, company, email, role`,
-    [fullName, company || null, normalizedEmail, passwordHash]
+    `INSERT INTO users (full_name, company, email, password_hash, access_level)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING id, full_name, company, email, role, access_level`,
+    [fullName, company || null, normalizedEmail, passwordHash, accessLevel]
   );
 
   const user = result.rows[0];
@@ -74,7 +80,7 @@ router.post("/login", async (req, res) => {
 
 router.get("/me", requireAuth, async (req, res) => {
   const result = await pool.query(
-    "SELECT id, full_name, company, email, role FROM users WHERE id = $1",
+    "SELECT id, full_name, company, email, role, access_level FROM users WHERE id = $1",
     [req.userId]
   );
   const user = result.rows[0];
@@ -93,7 +99,7 @@ router.put("/me", requireAuth, async (req, res) => {
   }
   const result = await pool.query(
     `UPDATE users SET full_name = $1, company = $2 WHERE id = $3
-     RETURNING id, full_name, company, email, role`,
+     RETURNING id, full_name, company, email, role, access_level`,
     [fullName.trim(), company ? company.trim() : null, req.userId]
   );
   res.json({ user: publicUser(result.rows[0]) });
