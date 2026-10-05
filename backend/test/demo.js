@@ -120,6 +120,28 @@ async function main() {
   check("the next request from the same address is rate limited", res.status === 429);
   check("a rate-limited request is not saved", !(await (await inbox(owner.token)).json()).requests.some((r) => r.email === "six@corp.test"));
 
+  // ---------------- OWNER_EMAIL names the owner explicitly ----------------
+  const me = async (token) => (await (await fetch(`${BASE}/api/auth/me`, { headers: json(token) })).json()).user;
+
+  process.env.OWNER_EMAIL = " Admin@Customer.Test , someone-else@site.test";
+  check("the named account becomes the site owner", (await me(customer.token)).isSiteOwner === true);
+  check("the named account can read the inbox", (await inbox(customer.token)).status === 200);
+  check("the oldest workspace's admin is no longer the owner", (await me(owner.token)).isSiteOwner === false);
+  check("the oldest workspace's admin can no longer read the inbox", (await inbox(owner.token)).status === 403);
+
+  // A named owner who is only a member still gets the inbox, and is made an
+  // admin of their own workspace on the next startup.
+  process.env.OWNER_EMAIL = "staff@site.test";
+  check("a named owner doesn't need to be an admin already", (await inbox(staff.token)).status === 200);
+  check("before startup promotion they are still a member", (await me(staff.token)).accessLevel === "member");
+  await require("../workspaces").promoteOwner();
+  const promoted = await me(staff.token);
+  check("startup promotion makes the named owner an admin", promoted.accessLevel === "admin" && promoted.isSiteOwner === true);
+  check("promotion leaves other accounts alone", (await me(customer.token)).isSiteOwner === false && (await me(customer.token)).accessLevel === "admin");
+
+  delete process.env.OWNER_EMAIL;
+  check("without OWNER_EMAIL the oldest-workspace rule applies again", (await me(owner.token)).isSiteOwner === true);
+
   const failed = results.filter((r) => !r.pass);
   results.forEach((r) => console.log(`${r.pass ? "PASS" : "FAIL"} - ${r.name}`));
   console.log(`\n${results.length - failed.length}/${results.length} checks passed`);

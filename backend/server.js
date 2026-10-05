@@ -5,7 +5,7 @@ const express = require("express");
 const cors = require("cors");
 
 const pool = require("./db");
-const { migrateLegacyData } = require("./workspaces");
+const { migrateLegacyData, promoteOwner } = require("./workspaces");
 const authRoutes = require("./routes/auth");
 const dashboardRoutes = require("./routes/dashboard");
 const adminRoutes = require("./routes/admin");
@@ -76,6 +76,7 @@ async function ensureSchema() {
   const schemaSql = fs.readFileSync(path.join(__dirname, "schema.sql"), "utf8");
   await pool.query(schemaSql);
   await migrateLegacyData();
+  await promoteOwner();
 }
 
 const port = process.env.PORT || 4000;

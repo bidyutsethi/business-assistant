@@ -32,7 +32,11 @@ async function loadUser(id) {
     [id]
   );
   const user = result.rows[0];
-  user.is_site_owner = await isSiteOwner(user.workspace_id, user.access_level);
+  user.is_site_owner = await isSiteOwner({
+    email: user.email,
+    workspaceId: user.workspace_id,
+    accessLevel: user.access_level,
+  });
   return user;
 }
 

@@ -20,13 +20,14 @@ async function requireAuth(req, res, next) {
     return res.status(401).json({ error: "Invalid or expired token." });
   }
 
-  const result = await pool.query("SELECT id, workspace_id, access_level FROM users WHERE id = $1", [payload.sub]);
+  const result = await pool.query("SELECT id, email, workspace_id, access_level FROM users WHERE id = $1", [payload.sub]);
   const user = result.rows[0];
   if (!user || !user.workspace_id) {
     return res.status(401).json({ error: "Invalid or expired token." });
   }
 
   req.userId = user.id;
+  req.userEmail = user.email;
   req.workspaceId = user.workspace_id;
   req.accessLevel = user.access_level;
   next();
@@ -48,19 +49,31 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+// Emails named in OWNER_EMAIL (comma-separated), lower-cased.
+function ownerEmails() {
+  return (process.env.OWNER_EMAIL || "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+}
+
 // The site owner is whoever runs this deployment, as opposed to a customer
-// who signed up: an admin of the oldest workspace (the first one created).
-async function isSiteOwner(workspaceId, accessLevel) {
+// who signed up. Set OWNER_EMAIL to say who that is. When it isn't set, the
+// fallback is a guess: an admin of the oldest workspace (the first created).
+async function isSiteOwner({ email, workspaceId, accessLevel }) {
+  const owners = ownerEmails();
+  if (owners.length) return owners.includes(String(email).toLowerCase());
+
   if (accessLevel !== "admin") return false;
   const oldest = await pool.query(`SELECT id FROM workspaces ORDER BY id ASC LIMIT 1`);
   return oldest.rows.length > 0 && oldest.rows[0].id === workspaceId;
 }
 
 async function requireSiteOwner(req, res, next) {
-  if (!(await isSiteOwner(req.workspaceId, req.accessLevel))) {
+  if (!(await isSiteOwner({ email: req.userEmail, workspaceId: req.workspaceId, accessLevel: req.accessLevel }))) {
     return res.status(403).json({ error: "Only the site owner can do this." });
   }
   next();
 }
 
-module.exports = { requireAuth, requireEditor, requireAdmin, requireSiteOwner, isSiteOwner };
+module.exports = { requireAuth, requireEditor, requireAdmin, requireSiteOwner, isSiteOwner, ownerEmails };

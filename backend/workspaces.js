@@ -4,6 +4,7 @@
 const crypto = require("crypto");
 const pool = require("./db");
 const { ensureReferenceData } = require("./seedData");
+const { ownerEmails } = require("./middleware/auth");
 
 const WORKSPACE_TABLES = ["users", "customers", "orders", "support_tickets", "tasks", "workflows", "integrations"];
 
@@ -64,4 +65,12 @@ async function migrateLegacyData() {
   }
 }
 
-module.exports = { createWorkspace, migrateLegacyData, newInviteCode };
+// The site owner (OWNER_EMAIL) should be able to manage their own workspace
+// too, so make sure that account is an admin. Runs on every startup.
+async function promoteOwner() {
+  for (const email of ownerEmails()) {
+    await pool.query(`UPDATE users SET access_level = 'admin' WHERE email = $1`, [email]);
+  }
+}
+
+module.exports = { createWorkspace, migrateLegacyData, promoteOwner, newInviteCode };

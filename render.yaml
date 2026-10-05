@@ -20,6 +20,8 @@ services:
         generateValue: true
       - key: ADMIN_SEED_KEY
         generateValue: true
+      - key: OWNER_EMAIL
+        sync: false
       - key: NODE_ENV
         value: production
       - key: CORS_ORIGIN
