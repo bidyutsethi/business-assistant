@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Book a Demo — Business Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;750&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="auth-shell">
+  <div class="auth-side">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h8l-1 8 10-12h-8l1-8z"/></svg></span>
+      Business Assistant
+    </a>
+    <blockquote>
+      See how Business Assistant fits the way your team already works.
+      <cite>Tell us a little about your business and we'll get back to you by email.</cite>
+    </blockquote>
+  </div>
+  <div class="auth-form-col">
+    <div class="auth-box">
+      <div id="demoFormWrap">
+        <h1 id="demoTitle">Book a demo</h1>
+        <p class="sub" id="demoSub">Leave your details and we'll be in touch to arrange a walkthrough.</p>
+
+        <form id="demoForm" novalidate>
+          <div class="field">
+            <label for="demoName">Full name</label>
+            <input type="text" id="demoName" required maxlength="120" autocomplete="name" placeholder="Alex Morgan">
+          </div>
+          <div class="field">
+            <label for="demoEmail">Work email</label>
+            <input type="email" id="demoEmail" required maxlength="200" autocomplete="email" placeholder="you@company.com">
+          </div>
+          <div class="field">
+            <label for="demoCompany">Company <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+            <input type="text" id="demoCompany" maxlength="160" autocomplete="organization" placeholder="Acme International">
+          </div>
+          <div class="field">
+            <label for="demoPhone">Phone <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+            <input type="tel" id="demoPhone" maxlength="40" autocomplete="tel" placeholder="+1 555 0100">
+          </div>
+          <div class="field">
+            <label for="demoMessage">What would you like to see? <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+            <textarea id="demoMessage" rows="4" maxlength="2000" placeholder="Team size, what you'd like help with, good times to talk..."></textarea>
+          </div>
+          <!-- Hidden from people; bots that fill every field give themselves away. -->
+          <div class="hp-field" aria-hidden="true">
+            <label for="demoWebsite">Website</label>
+            <input type="text" id="demoWebsite" tabindex="-1" autocomplete="off">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block" id="demoSubmit">Request a demo</button>
+        </form>
+
+        <p class="auth-switch">Just want to try it? <a href="signup.html">Create a free account</a></p>
+      </div>
+
+      <div id="demoDone" hidden>
+        <h1>Thanks — request received</h1>
+        <p class="sub" style="margin-bottom:24px;">We've saved your details and will reply to <b id="demoDoneEmail"></b>.</p>
+        <a href="index.html" class="btn btn-secondary btn-block" style="margin-bottom:10px;">Back to the homepage</a>
+        <a href="signup.html" class="btn btn-primary btn-block">Create a free account</a>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast-stack" id="toastStack"></div>
+<script src="config.js"></script>
+<script src="script.js"></script>
+<script src="book-demo.js"></script>
+</body>
+</html>

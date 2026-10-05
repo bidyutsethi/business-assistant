@@ -19,8 +19,13 @@ const workflowsRoutes = require("./routes/workflows");
 const integrationsRoutes = require("./routes/integrations");
 const analyticsRoutes = require("./routes/analytics");
 const assistantRoutes = require("./routes/assistant");
+const demoRequestsRoutes = require("./routes/demoRequests");
 
 const app = express();
+
+// Render (and most hosts) put a proxy in front of the app; trusting it makes
+// req.ip the visitor's address rather than the proxy's.
+app.set("trust proxy", 1);
 
 const allowedOrigins = (
   process.env.CORS_ORIGIN || "http://localhost:8790,https://bidyutsethi.github.io"
@@ -52,6 +57,7 @@ app.use("/api/workflows", workflowsRoutes);
 app.use("/api/integrations", integrationsRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/assistant", assistantRoutes);
+app.use("/api/demo-requests", demoRequestsRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: "Not found." });

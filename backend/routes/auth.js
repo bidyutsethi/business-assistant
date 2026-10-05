@@ -2,7 +2,7 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const pool = require("../db");
-const { requireAuth } = require("../middleware/auth");
+const { requireAuth, isSiteOwner } = require("../middleware/auth");
 const { createWorkspace } = require("../workspaces");
 
 const router = express.Router();
@@ -20,17 +20,20 @@ function publicUser(user) {
     role: user.role,
     accessLevel: user.access_level,
     workspaceName: user.workspace_name,
+    isSiteOwner: user.is_site_owner,
   };
 }
 
 async function loadUser(id) {
   const result = await pool.query(
-    `SELECT u.id, u.full_name, u.company, u.email, u.role, u.access_level, w.name AS workspace_name
+    `SELECT u.id, u.full_name, u.company, u.email, u.role, u.access_level, u.workspace_id, w.name AS workspace_name
      FROM users u JOIN workspaces w ON w.id = u.workspace_id
      WHERE u.id = $1`,
     [id]
   );
-  return result.rows[0];
+  const user = result.rows[0];
+  user.is_site_owner = await isSiteOwner(user.workspace_id, user.access_level);
+  return user;
 }
 
 // Lets the signup page show which workspace an invite link leads to.

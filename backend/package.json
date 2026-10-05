@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "seed": "node seed.js",
-    "test": "node test/run.js && node test/crud.js && node test/access.js && node test/migrate.js"
+    "test": "node test/run.js && node test/crud.js && node test/access.js && node test/migrate.js && node test/demo.js"
   },
   "license": "ISC",
   "dependencies": {

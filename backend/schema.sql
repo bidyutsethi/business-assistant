@@ -91,3 +91,17 @@ CREATE INDEX IF NOT EXISTS idx_customers_workspace ON customers(workspace_id);
 CREATE INDEX IF NOT EXISTS idx_orders_workspace ON orders(workspace_id);
 CREATE INDEX IF NOT EXISTS idx_tickets_workspace ON support_tickets(workspace_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_workspace ON tasks(workspace_id);
+
+-- "Book a Demo" / "Contact Sales" requests from the public site. Not tied to
+-- a workspace: they're leads for the site owner.
+CREATE TABLE IF NOT EXISTS demo_requests (
+  id SERIAL PRIMARY KEY,
+  full_name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  company TEXT,
+  phone TEXT,
+  message TEXT,
+  kind TEXT NOT NULL DEFAULT 'demo',   -- demo | sales
+  status TEXT NOT NULL DEFAULT 'new',  -- new | contacted | closed
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

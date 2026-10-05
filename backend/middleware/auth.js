@@ -48,4 +48,19 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-module.exports = { requireAuth, requireEditor, requireAdmin };
+// The site owner is whoever runs this deployment, as opposed to a customer
+// who signed up: an admin of the oldest workspace (the first one created).
+async function isSiteOwner(workspaceId, accessLevel) {
+  if (accessLevel !== "admin") return false;
+  const oldest = await pool.query(`SELECT id FROM workspaces ORDER BY id ASC LIMIT 1`);
+  return oldest.rows.length > 0 && oldest.rows[0].id === workspaceId;
+}
+
+async function requireSiteOwner(req, res, next) {
+  if (!(await isSiteOwner(req.workspaceId, req.accessLevel))) {
+    return res.status(403).json({ error: "Only the site owner can do this." });
+  }
+  next();
+}
+
+module.exports = { requireAuth, requireEditor, requireAdmin, requireSiteOwner, isSiteOwner };

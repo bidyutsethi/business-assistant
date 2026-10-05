@@ -79,4 +79,16 @@
   };
 
   document.addEventListener("DOMContentLoaded", () => window.applyUserInfo());
+
+  // The copy of the account saved at login goes stale (an admin may have
+  // changed this person's access since). Refresh it quietly on each page load.
+  window
+    .baFetch("/auth/me")
+    .then(({ user: fresh }) => {
+      const changed = JSON.stringify(fresh) !== JSON.stringify(user);
+      Object.assign(user, fresh);
+      localStorage.setItem("ba_user", JSON.stringify(user));
+      if (changed) document.dispatchEvent(new Event("ba:user"));
+    })
+    .catch(() => {});
 })();

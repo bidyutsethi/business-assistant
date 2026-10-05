@@ -529,12 +529,15 @@ section { position: relative; }
 .auth-box .sub { color: var(--slate-400); font-size: 14.5px; margin-top: 8px; margin-bottom: 32px; }
 .field { margin-bottom: 18px; }
 .field label { display: block; font-size: 13.5px; font-weight: 600; margin-bottom: 7px; color: var(--navy-800); }
-.field input {
+.field input, .field textarea {
   width: 100%; padding: 12px 14px; border-radius: var(--radius-md); border: 1.5px solid #dde1ec; font-size: 14.5px;
   transition: border-color var(--transition), box-shadow var(--transition);
 }
-.field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.field textarea { font-family: inherit; resize: vertical; min-height: 96px; }
+.field input:focus, .field textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 .field-error input { border-color: var(--danger); }
+/* Honeypot: kept out of sight and out of the tab order, but still in the DOM. */
+.hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .field-error .error-msg { display: block; color: var(--danger); font-size: 12.5px; margin-top: 6px; }
 .field-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
 .checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--navy-700); }
@@ -632,6 +635,7 @@ section { position: relative; }
 .modal-box h3 { font-size: 17px; font-weight: 650; margin-bottom: 18px; }
 .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
 .text-muted { color: var(--slate-400); }
+.request-message { max-width: 320px; white-space: pre-wrap; overflow-wrap: anywhere; }
 
 /* Skeleton loader */
 .skeleton { background: linear-gradient(90deg, #eceef4 25%, #f5f6fa 37%, #eceef4 63%); background-size: 400% 100%; animation: shimmer 1.4s ease infinite; border-radius: var(--radius-sm); }
