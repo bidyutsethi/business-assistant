@@ -9,18 +9,18 @@ const STATUSES = ["open", "pending", "resolved"];
 
 router.get("/", async (req, res) => {
   const { status } = req.query;
-  const params = [];
-  let where = "";
+  const params = [req.workspaceId];
+  let statusFilter = "";
   if (status && STATUSES.includes(status)) {
     params.push(status);
-    where = `WHERE t.status = $1`;
+    statusFilter = `AND t.status = $2`;
   }
   const result = await pool.query(
     `SELECT t.id, t.subject, t.region, t.status, t.created_at,
             t.customer_id, c.name AS customer_name
      FROM support_tickets t
      LEFT JOIN customers c ON c.id = t.customer_id
-     ${where}
+     WHERE t.workspace_id = $1 ${statusFilter}
      ORDER BY t.created_at DESC
      LIMIT 200`,
     params
@@ -33,14 +33,17 @@ router.post("/", async (req, res) => {
   if (!subject || !subject.trim()) return res.status(400).json({ error: "Subject is required." });
   if (!customerId) return res.status(400).json({ error: "A customer is required." });
 
-  const customer = await pool.query(`SELECT id, name, region FROM customers WHERE id = $1`, [customerId]);
+  const customer = await pool.query(`SELECT id, name, region FROM customers WHERE id = $1 AND workspace_id = $2`, [
+    customerId,
+    req.workspaceId,
+  ]);
   if (!customer.rows.length) return res.status(404).json({ error: "Customer not found." });
 
   const result = await pool.query(
-    `INSERT INTO support_tickets (subject, customer_id, region, status)
-     VALUES ($1, $2, $3, 'open')
+    `INSERT INTO support_tickets (workspace_id, subject, customer_id, region, status)
+     VALUES ($1, $2, $3, $4, 'open')
      RETURNING id, subject, region, status, created_at, customer_id`,
-    [subject.trim(), customerId, region || customer.rows[0].region]
+    [req.workspaceId, subject.trim(), customerId, region || customer.rows[0].region]
   );
   res.status(201).json({ ticket: { ...result.rows[0], customer_name: customer.rows[0].name } });
 });
@@ -51,16 +54,19 @@ router.put("/:id", async (req, res) => {
     return res.status(400).json({ error: `Status must be one of: ${STATUSES.join(", ")}.` });
   }
   const result = await pool.query(
-    `UPDATE support_tickets SET status = $1 WHERE id = $2
+    `UPDATE support_tickets SET status = $1 WHERE id = $2 AND workspace_id = $3
      RETURNING id, subject, region, status, created_at, customer_id`,
-    [status, req.params.id]
+    [status, req.params.id, req.workspaceId]
   );
   if (!result.rows.length) return res.status(404).json({ error: "Ticket not found." });
   res.json({ ticket: result.rows[0] });
 });
 
 router.delete("/:id", async (req, res) => {
-  const result = await pool.query(`DELETE FROM support_tickets WHERE id = $1 RETURNING id`, [req.params.id]);
+  const result = await pool.query(`DELETE FROM support_tickets WHERE id = $1 AND workspace_id = $2 RETURNING id`, [
+    req.params.id,
+    req.workspaceId,
+  ]);
   if (!result.rows.length) return res.status(404).json({ error: "Ticket not found." });
   res.json({ status: "deleted" });
 });

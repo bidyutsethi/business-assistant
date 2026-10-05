@@ -53,8 +53,9 @@ router.get("/generate", async (req, res) => {
   const region = REGIONS.includes(req.query.region) ? req.query.region : null;
   const { start, end, prevStart, prevEnd, label } = getRangeBounds(range);
 
-  const regionFilter = region ? "AND region = $3" : "";
-  const bounds = (s, e) => (region ? [s, e, region] : [s, e]);
+  const ws = req.workspaceId;
+  const regionFilter = region ? "AND region = $4" : "";
+  const bounds = (s, e) => (region ? [ws, s, e, region] : [ws, s, e]);
 
   const [
     revenueCurr,
@@ -68,23 +69,23 @@ router.get("/generate", async (req, res) => {
     regionBreakdown,
     trendRows,
   ] = await Promise.all([
-    pool.query(`SELECT COALESCE(SUM(amount),0) AS total FROM orders WHERE created_at >= $1 AND created_at < $2 ${regionFilter}`, bounds(start, end)),
-    pool.query(`SELECT COALESCE(SUM(amount),0) AS total FROM orders WHERE created_at >= $1 AND created_at < $2 ${regionFilter}`, bounds(prevStart, prevEnd)),
-    pool.query(`SELECT COUNT(*)::int AS count FROM orders WHERE created_at >= $1 AND created_at < $2 ${regionFilter}`, bounds(start, end)),
-    pool.query(`SELECT COUNT(*)::int AS count FROM orders WHERE created_at >= $1 AND created_at < $2 ${regionFilter}`, bounds(prevStart, prevEnd)),
-    pool.query(`SELECT COUNT(DISTINCT customer_id)::int AS count FROM orders WHERE created_at >= $1 AND created_at < $2 ${regionFilter}`, bounds(start, end)),
-    pool.query(`SELECT COUNT(*)::int AS count FROM support_tickets WHERE created_at >= $1 AND created_at < $2 ${regionFilter}`, bounds(start, end)),
-    pool.query(`SELECT COUNT(*)::int AS count FROM support_tickets WHERE created_at >= $1 AND created_at < $2 ${regionFilter}`, bounds(prevStart, prevEnd)),
-    pool.query(`SELECT COUNT(*)::int AS count FROM tasks WHERE status != 'done'`),
+    pool.query(`SELECT COALESCE(SUM(amount),0) AS total FROM orders WHERE workspace_id = $1 AND created_at >= $2 AND created_at < $3 ${regionFilter}`, bounds(start, end)),
+    pool.query(`SELECT COALESCE(SUM(amount),0) AS total FROM orders WHERE workspace_id = $1 AND created_at >= $2 AND created_at < $3 ${regionFilter}`, bounds(prevStart, prevEnd)),
+    pool.query(`SELECT COUNT(*)::int AS count FROM orders WHERE workspace_id = $1 AND created_at >= $2 AND created_at < $3 ${regionFilter}`, bounds(start, end)),
+    pool.query(`SELECT COUNT(*)::int AS count FROM orders WHERE workspace_id = $1 AND created_at >= $2 AND created_at < $3 ${regionFilter}`, bounds(prevStart, prevEnd)),
+    pool.query(`SELECT COUNT(DISTINCT customer_id)::int AS count FROM orders WHERE workspace_id = $1 AND created_at >= $2 AND created_at < $3 ${regionFilter}`, bounds(start, end)),
+    pool.query(`SELECT COUNT(*)::int AS count FROM support_tickets WHERE workspace_id = $1 AND created_at >= $2 AND created_at < $3 ${regionFilter}`, bounds(start, end)),
+    pool.query(`SELECT COUNT(*)::int AS count FROM support_tickets WHERE workspace_id = $1 AND created_at >= $2 AND created_at < $3 ${regionFilter}`, bounds(prevStart, prevEnd)),
+    pool.query(`SELECT COUNT(*)::int AS count FROM tasks WHERE workspace_id = $1 AND status != 'done'`, [ws]),
     pool.query(
       `SELECT region, COALESCE(SUM(amount),0) AS total FROM orders
-       WHERE created_at >= $1 AND created_at < $2
+       WHERE workspace_id = $1 AND created_at >= $2 AND created_at < $3
        GROUP BY region`,
-      [start, end]
+      [ws, start, end]
     ),
     pool.query(
       `SELECT date_trunc('week', created_at) AS week, SUM(amount) AS total
-       FROM orders WHERE created_at >= $1 AND created_at < $2 ${regionFilter}
+       FROM orders WHERE workspace_id = $1 AND created_at >= $2 AND created_at < $3 ${regionFilter}
        GROUP BY date_trunc('week', created_at)
        ORDER BY date_trunc('week', created_at) ASC`,
       bounds(start, end)

@@ -1,6 +1,6 @@
 // Core seed logic, shared by the CLI script (npm run seed) and the
 // protected /api/admin/seed route (used when Shell access isn't available,
-// e.g. on Render's free plan).
+// e.g. on Render's free plan) and the "Load sample data" button.
 
 const pool = require("./db");
 
@@ -82,27 +82,51 @@ const TASK_TITLES = [
   { title: "Prepare board summary deck", status: "open" },
 ];
 
-async function seedDatabase() {
+// Workflows/integrations are reference data users can toggle. Every workspace
+// gets its own copy when it's created; this never touches existing rows.
+async function ensureReferenceData(workspaceId) {
+  const workflowCount = await pool.query(`SELECT COUNT(*)::int AS count FROM workflows WHERE workspace_id = $1`, [workspaceId]);
+  if (workflowCount.rows[0].count === 0) {
+    for (const w of WORKFLOWS) {
+      await pool.query(
+        `INSERT INTO workflows (workspace_id, name, description, trigger_label, action_label, enabled) VALUES ($1, $2, $3, $4, $5, true)`,
+        [workspaceId, w.name, w.description, w.trigger, w.action]
+      );
+    }
+  }
+
+  const integrationCount = await pool.query(`SELECT COUNT(*)::int AS count FROM integrations WHERE workspace_id = $1`, [workspaceId]);
+  if (integrationCount.rows[0].count === 0) {
+    for (const i of INTEGRATIONS) {
+      await pool.query(`INSERT INTO integrations (workspace_id, name, category, connected) VALUES ($1, $2, $3, false)`, [
+        workspaceId,
+        i.name,
+        i.category,
+      ]);
+    }
+  }
+}
+
+// Replaces one workspace's customers, orders, tickets and tasks with sample
+// data. Other workspaces are never touched.
+async function seedDatabase(workspaceId) {
   const rand = mulberry32(42);
   const pick = (arr) => arr[Math.floor(rand() * arr.length)];
   const randInt = (min, max) => Math.floor(rand() * (max - min + 1)) + min;
 
-  await pool.query(`
-    TRUNCATE TABLE support_tickets RESTART IDENTITY CASCADE;
-    TRUNCATE TABLE orders RESTART IDENTITY CASCADE;
-    TRUNCATE TABLE tasks RESTART IDENTITY CASCADE;
-    TRUNCATE TABLE customers RESTART IDENTITY CASCADE;
-  `);
+  for (const table of ["support_tickets", "orders", "tasks", "customers"]) {
+    await pool.query(`DELETE FROM ${table} WHERE workspace_id = $1`, [workspaceId]);
+  }
 
   const customerIds = [];
   for (const name of CUSTOMER_NAMES) {
     const region = pick(REGIONS);
     const monthsAgo = randInt(1, 10);
     const { rows } = await pool.query(
-      `INSERT INTO customers (name, region, created_at)
-       VALUES ($1, $2, now() - ($3 || ' months')::interval)
+      `INSERT INTO customers (name, region, created_at, workspace_id)
+       VALUES ($1, $2, now() - ($3 || ' months')::interval, $4)
        RETURNING id`,
-      [name, region, monthsAgo]
+      [name, region, monthsAgo, workspaceId]
     );
     customerIds.push({ id: rows[0].id, region });
   }
@@ -117,10 +141,10 @@ async function seedDatabase() {
       const dayOffset = randInt(0, 27);
       orderNum += 1;
       await pool.query(
-        `INSERT INTO orders (order_number, customer_id, amount, status, region, created_at)
+        `INSERT INTO orders (order_number, customer_id, amount, status, region, created_at, workspace_id)
          VALUES ($1, $2, $3, $4, $5,
-           date_trunc('month', now()) - ($6 || ' months')::interval + ($7 || ' days')::interval)`,
-        [`#${orderNum}`, customer.id, amount, pick(statuses), customer.region, monthsBack, dayOffset]
+           date_trunc('month', now()) - ($6 || ' months')::interval + ($7 || ' days')::interval, $8)`,
+        [`#${orderNum}`, customer.id, amount, pick(statuses), customer.region, monthsBack, dayOffset, workspaceId]
       );
     }
   }
@@ -130,9 +154,9 @@ async function seedDatabase() {
     const customer = pick(customerIds);
     orderNum += 1;
     await pool.query(
-      `INSERT INTO orders (order_number, customer_id, amount, status, region, created_at)
-       VALUES ($1, $2, $3, $4, $5, now() - ($6 || ' hours')::interval)`,
-      [`#${orderNum}`, customer.id, randInt(200, 4200), recentStatuses[i], customer.region, i * 6]
+      `INSERT INTO orders (order_number, customer_id, amount, status, region, created_at, workspace_id)
+       VALUES ($1, $2, $3, $4, $5, now() - ($6 || ' hours')::interval, $7)`,
+      [`#${orderNum}`, customer.id, randInt(200, 4200), recentStatuses[i], customer.region, i * 6, workspaceId]
     );
   }
 
@@ -146,37 +170,17 @@ async function seedDatabase() {
     const recentBias = rand() < 0.55 ? randInt(0, 6) : randInt(7, 13);
     const region = rand() < 0.4 ? "APAC" : pick(REGIONS);
     await pool.query(
-      `INSERT INTO support_tickets (subject, customer_id, region, status, created_at)
-       VALUES ($1, $2, $3, $4, now() - ($5 || ' days')::interval)`,
-      [pick(subjects), customer.id, region, pick(["open", "pending", "resolved"]), recentBias]
+      `INSERT INTO support_tickets (subject, customer_id, region, status, created_at, workspace_id)
+       VALUES ($1, $2, $3, $4, now() - ($5 || ' days')::interval, $6)`,
+      [pick(subjects), customer.id, region, pick(["open", "pending", "resolved"]), recentBias, workspaceId]
     );
   }
 
   for (const t of TASK_TITLES) {
-    await pool.query(`INSERT INTO tasks (title, status) VALUES ($1, $2)`, [t.title, t.status]);
+    await pool.query(`INSERT INTO tasks (title, status, workspace_id) VALUES ($1, $2, $3)`, [t.title, t.status, workspaceId]);
   }
 
-  // Workflows/integrations are reference data users can toggle — seed once,
-  // don't wipe their state on every re-seed of the transactional tables.
-  const workflowCount = await pool.query(`SELECT COUNT(*)::int AS count FROM workflows`);
-  if (workflowCount.rows[0].count === 0) {
-    for (const w of WORKFLOWS) {
-      await pool.query(
-        `INSERT INTO workflows (name, description, trigger_label, action_label, enabled) VALUES ($1, $2, $3, $4, true)`,
-        [w.name, w.description, w.trigger, w.action]
-      );
-    }
-  }
-
-  const integrationCount = await pool.query(`SELECT COUNT(*)::int AS count FROM integrations`);
-  if (integrationCount.rows[0].count === 0) {
-    for (const i of INTEGRATIONS) {
-      await pool.query(`INSERT INTO integrations (name, category, connected) VALUES ($1, $2, false)`, [
-        i.name,
-        i.category,
-      ]);
-    }
-  }
+  await ensureReferenceData(workspaceId);
 
   return {
     customers: customerIds.length,
@@ -186,4 +190,4 @@ async function seedDatabase() {
   };
 }
 
-module.exports = { seedDatabase };
+module.exports = { seedDatabase, ensureReferenceData };

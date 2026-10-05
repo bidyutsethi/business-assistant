@@ -81,24 +81,26 @@ async function main() {
 
   const { Pool } = pgAdapter;
   const pool = new Pool();
+  // Rows are inserted straight into the signed-up user's workspace.
+  const ws = (await pool.query(`SELECT workspace_id FROM users WHERE email = $1`, ["alex@acme.test"])).rows[0].workspace_id;
   const custRes = await pool.query(
-    `INSERT INTO customers (name, region) VALUES ($1,$2) RETURNING id`,
-    ["Test Co", "North America"]
+    `INSERT INTO customers (name, region, workspace_id) VALUES ($1,$2,$3) RETURNING id`,
+    ["Test Co", "North America", ws]
   );
   const custId = custRes.rows[0].id;
   await pool.query(
-    `INSERT INTO orders (order_number, customer_id, amount, status, region) VALUES ($1,$2,$3,$4,$5)`,
-    ["#1001", custId, 500, "fulfilled", "North America"]
+    `INSERT INTO orders (order_number, customer_id, amount, status, region, workspace_id) VALUES ($1,$2,$3,$4,$5,$6)`,
+    ["#1001", custId, 500, "fulfilled", "North America", ws]
   );
   await pool.query(
-    `INSERT INTO orders (order_number, customer_id, amount, status, region) VALUES ($1,$2,$3,$4,$5)`,
-    ["#1002", custId, 700, "processing", "North America"]
+    `INSERT INTO orders (order_number, customer_id, amount, status, region, workspace_id) VALUES ($1,$2,$3,$4,$5,$6)`,
+    ["#1002", custId, 700, "processing", "North America", ws]
   );
   await pool.query(
-    `INSERT INTO support_tickets (subject, customer_id, region, status) VALUES ($1,$2,$3,$4)`,
-    ["Order status", custId, "North America", "open"]
+    `INSERT INTO support_tickets (subject, customer_id, region, status, workspace_id) VALUES ($1,$2,$3,$4,$5)`,
+    ["Order status", custId, "North America", "open", ws]
   );
-  await pool.query(`INSERT INTO tasks (title, status) VALUES ($1,$2)`, ["Review test task", "open"]);
+  await pool.query(`INSERT INTO tasks (title, status, workspace_id) VALUES ($1,$2,$3)`, ["Review test task", "open", ws]);
 
   res = await fetch(`${BASE}/api/dashboard/summary`, { headers: { Authorization: `Bearer ${token}` } });
   const summaryBody = await res.json();

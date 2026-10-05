@@ -42,36 +42,36 @@ function daysAgo(n) {
   return new Date(Date.now() - n * DAY_MS);
 }
 
-async function revenueBetween(start, end) {
+async function revenueBetween(ws, start, end) {
   const result = await pool.query(
     `SELECT COALESCE(SUM(amount), 0) AS total, COUNT(*)::int AS count
-     FROM orders WHERE created_at >= $1 AND created_at < $2`,
-    [start, end]
+     FROM orders WHERE workspace_id = $1 AND created_at >= $2 AND created_at < $3`,
+    [ws, start, end]
   );
   return { total: Number(result.rows[0].total), count: result.rows[0].count };
 }
 
-async function ticketsBetween(start, end) {
+async function ticketsBetween(ws, start, end) {
   const result = await pool.query(
-    `SELECT COUNT(*)::int AS count FROM support_tickets WHERE created_at >= $1 AND created_at < $2`,
-    [start, end]
+    `SELECT COUNT(*)::int AS count FROM support_tickets WHERE workspace_id = $1 AND created_at >= $2 AND created_at < $3`,
+    [ws, start, end]
   );
   return result.rows[0].count;
 }
 
-async function findOrder(number) {
+async function findOrder(ws, number) {
   const result = await pool.query(
     `SELECT o.id, o.order_number, o.amount, o.status, o.region, o.created_at, c.name AS customer_name
      FROM orders o JOIN customers c ON c.id = o.customer_id
-     WHERE o.order_number = $1`,
-    [`#${number}`]
+     WHERE o.workspace_id = $1 AND o.order_number = $2`,
+    [ws, `#${number}`]
   );
   return result.rows[0];
 }
 
-async function answerRevenue() {
+async function answerRevenue(ws) {
   const { start, end, prevStart } = monthBounds();
-  const [curr, prev] = await Promise.all([revenueBetween(start, end), revenueBetween(prevStart, start)]);
+  const [curr, prev] = await Promise.all([revenueBetween(ws, start, end), revenueBetween(ws, prevStart, start)]);
   return {
     reply: `Revenue this month is ${money(curr.total)} from ${curr.count} orders — ${trend(
       pctChange(curr.total, prev.total)
@@ -86,11 +86,11 @@ async function answerRevenue() {
   };
 }
 
-async function answerOrders() {
+async function answerOrders(ws) {
   const { start, end } = monthBounds();
   const [curr, byStatus] = await Promise.all([
-    revenueBetween(start, end),
-    pool.query(`SELECT status, COUNT(*)::int AS count FROM orders GROUP BY status`),
+    revenueBetween(ws, start, end),
+    pool.query(`SELECT status, COUNT(*)::int AS count FROM orders WHERE workspace_id = $1 GROUP BY status`, [ws]),
   ]);
   const counts = Object.fromEntries(byStatus.rows.map((r) => [r.status, r.count]));
   return {
@@ -100,8 +100,8 @@ async function answerOrders() {
   };
 }
 
-async function answerOrderLookup(number) {
-  const order = await findOrder(number);
+async function answerOrderLookup(ws, number) {
+  const order = await findOrder(ws, number);
   if (!order) return { reply: `I couldn't find order #${number}.`, link: { href: "orders.html", label: "Open Orders" } };
   return {
     reply: `Order ${order.order_number} is for ${order.customer_name}.`,
@@ -115,8 +115,8 @@ async function answerOrderLookup(number) {
   };
 }
 
-async function answerOrderStatusChange(number, status) {
-  const order = await findOrder(number);
+async function answerOrderStatusChange(ws, number, status) {
+  const order = await findOrder(ws, number);
   if (!order) return { reply: `I couldn't find order #${number}.` };
   if (order.status === status) {
     return { reply: `Order ${order.order_number} is already marked ${status}.` };
@@ -133,12 +133,13 @@ async function answerOrderStatusChange(number, status) {
   };
 }
 
-async function answerOverdue() {
+async function answerOverdue(ws) {
   const result = await pool.query(
     `SELECT c.name, COUNT(o.id)::int AS count, COALESCE(SUM(o.amount), 0) AS total
      FROM orders o JOIN customers c ON c.id = o.customer_id
-     WHERE o.status = 'overdue'
-     GROUP BY c.name`
+     WHERE o.workspace_id = $1 AND o.status = 'overdue'
+     GROUP BY c.name`,
+    [ws]
   );
   const rows = result.rows.map((r) => ({ ...r, total: Number(r.total) })).sort((a, b) => b.total - a.total);
   if (!rows.length) return { reply: "No orders are overdue right now — nothing is waiting on payment." };
@@ -150,14 +151,14 @@ async function answerOverdue() {
   };
 }
 
-async function answerUnusual() {
+async function answerUnusual(ws) {
   const result = await pool.query(
     `SELECT o.order_number, o.amount, c.name AS customer_name
      FROM orders o JOIN customers c ON c.id = o.customer_id
-     WHERE o.created_at >= $1
+     WHERE o.workspace_id = $1 AND o.created_at >= $2
      ORDER BY o.created_at DESC
      LIMIT 2000`,
-    [daysAgo(30)]
+    [ws, daysAgo(30)]
   );
   const orders = result.rows.map((r) => ({ ...r, amount: Number(r.amount) }));
   if (orders.length < 5) {
@@ -178,14 +179,14 @@ async function answerUnusual() {
   };
 }
 
-async function answerTickets() {
+async function answerTickets(ws) {
   const now = new Date();
   const [thisWeek, lastWeek, byStatus, byRegion, bySubject] = await Promise.all([
-    ticketsBetween(daysAgo(7), now),
-    ticketsBetween(daysAgo(14), daysAgo(7)),
-    pool.query(`SELECT status, COUNT(*)::int AS count FROM support_tickets GROUP BY status`),
-    pool.query(`SELECT region, COUNT(*)::int AS count FROM support_tickets WHERE created_at >= $1 GROUP BY region`, [daysAgo(7)]),
-    pool.query(`SELECT subject, COUNT(*)::int AS count FROM support_tickets WHERE created_at >= $1 GROUP BY subject`, [daysAgo(7)]),
+    ticketsBetween(ws, daysAgo(7), now),
+    ticketsBetween(ws, daysAgo(14), daysAgo(7)),
+    pool.query(`SELECT status, COUNT(*)::int AS count FROM support_tickets WHERE workspace_id = $1 GROUP BY status`, [ws]),
+    pool.query(`SELECT region, COUNT(*)::int AS count FROM support_tickets WHERE workspace_id = $1 AND created_at >= $2 GROUP BY region`, [ws, daysAgo(7)]),
+    pool.query(`SELECT subject, COUNT(*)::int AS count FROM support_tickets WHERE workspace_id = $1 AND created_at >= $2 GROUP BY subject`, [ws, daysAgo(7)]),
   ]);
   const counts = Object.fromEntries(byStatus.rows.map((r) => [r.status, r.count]));
   const topRegion = byRegion.rows.sort((a, b) => b.count - a.count)[0];
@@ -207,8 +208,11 @@ async function answerTickets() {
   };
 }
 
-async function answerTasks() {
-  const result = await pool.query(`SELECT title, status FROM tasks WHERE status != 'done' ORDER BY created_at DESC`);
+async function answerTasks(ws) {
+  const result = await pool.query(
+    `SELECT title, status FROM tasks WHERE workspace_id = $1 AND status != 'done' ORDER BY created_at DESC`,
+    [ws]
+  );
   const tasks = result.rows;
   if (!tasks.length) return { reply: "There are no pending tasks — everything is done." };
   const approvals = tasks.filter((t) => t.status === "approval");
@@ -222,15 +226,15 @@ async function answerTasks() {
   };
 }
 
-async function answerRegions() {
+async function answerRegions(ws) {
   const { start, end } = monthBounds();
   const [revenue, tickets] = await Promise.all([
     pool.query(
       `SELECT region, COALESCE(SUM(amount), 0) AS total FROM orders
-       WHERE created_at >= $1 AND created_at < $2 GROUP BY region`,
-      [start, end]
+       WHERE workspace_id = $1 AND created_at >= $2 AND created_at < $3 GROUP BY region`,
+      [ws, start, end]
     ),
-    pool.query(`SELECT region, COUNT(*)::int AS count FROM support_tickets WHERE created_at >= $1 GROUP BY region`, [daysAgo(7)]),
+    pool.query(`SELECT region, COUNT(*)::int AS count FROM support_tickets WHERE workspace_id = $1 AND created_at >= $2 GROUP BY region`, [ws, daysAgo(7)]),
   ]);
   const regions = revenue.rows.map((r) => ({ region: r.region, total: Number(r.total) })).sort((a, b) => b.total - a.total);
   if (!regions.length) return { reply: "There are no orders this month yet, so there's nothing to compare by region." };
@@ -248,11 +252,13 @@ async function answerRegions() {
   };
 }
 
-async function answerTopCustomers() {
+async function answerTopCustomers(ws) {
   const result = await pool.query(
     `SELECT c.name, COUNT(o.id)::int AS count, COALESCE(SUM(o.amount), 0) AS total
      FROM customers c JOIN orders o ON o.customer_id = c.id
-     GROUP BY c.name`
+     WHERE c.workspace_id = $1
+     GROUP BY c.name`,
+    [ws]
   );
   const rows = result.rows.map((r) => ({ ...r, total: Number(r.total) })).sort((a, b) => b.total - a.total);
   if (!rows.length) return { reply: "No customers have placed orders yet." };
@@ -263,12 +269,12 @@ async function answerTopCustomers() {
   };
 }
 
-async function answerCustomers() {
+async function answerCustomers(ws) {
   const { start } = monthBounds();
   const [all, fresh, byRegion] = await Promise.all([
-    pool.query(`SELECT COUNT(*)::int AS count FROM customers`),
-    pool.query(`SELECT COUNT(*)::int AS count FROM customers WHERE created_at >= $1`, [start]),
-    pool.query(`SELECT region, COUNT(*)::int AS count FROM customers GROUP BY region`),
+    pool.query(`SELECT COUNT(*)::int AS count FROM customers WHERE workspace_id = $1`, [ws]),
+    pool.query(`SELECT COUNT(*)::int AS count FROM customers WHERE workspace_id = $1 AND created_at >= $2`, [ws, start]),
+    pool.query(`SELECT region, COUNT(*)::int AS count FROM customers WHERE workspace_id = $1 GROUP BY region`, [ws]),
   ]);
   return {
     reply: `You have ${all.rows[0].count} customers, ${fresh.rows[0].count} of them added this month.`,
@@ -277,14 +283,14 @@ async function answerCustomers() {
   };
 }
 
-async function answerReport() {
+async function answerReport(ws) {
   const { start, end, prevStart } = monthBounds();
   const now = new Date();
   const [curr, prev, tickets, tasks] = await Promise.all([
-    revenueBetween(start, end),
-    revenueBetween(prevStart, start),
-    ticketsBetween(start, now),
-    pool.query(`SELECT COUNT(*)::int AS count FROM tasks WHERE status != 'done'`),
+    revenueBetween(ws, start, end),
+    revenueBetween(ws, prevStart, start),
+    ticketsBetween(ws, start, now),
+    pool.query(`SELECT COUNT(*)::int AS count FROM tasks WHERE workspace_id = $1 AND status != 'done'`, [ws]),
   ]);
   return {
     reply: `Here is this month so far: revenue is ${money(curr.total)}, ${trend(
@@ -310,13 +316,13 @@ function answerHelp(prefix) {
   };
 }
 
-async function answer(message) {
+async function answer(ws, message) {
   const text = message.toLowerCase();
   const orderRef = text.match(/order\s*(?:number\s*)?#?\s*(\d{3,})/);
   const status = ORDER_STATUSES.find((s) => new RegExp(`\\b${s}\\b`).test(text));
 
   if (orderRef && status && /\b(mark|set|change|update|move|make)\b/.test(text)) {
-    return answerOrderStatusChange(orderRef[1], status);
+    return answerOrderStatusChange(ws, orderRef[1], status);
   }
   if (/\brefund/.test(text)) {
     return {
@@ -325,17 +331,17 @@ async function answer(message) {
         'for example "mark order #10450 as overdue".',
     };
   }
-  if (orderRef) return answerOrderLookup(orderRef[1]);
-  if (/\b(mis|report|summary|overview)\b/.test(text)) return answerReport();
-  if (/overdue|unpaid|outstanding|pending payment|late payment/.test(text)) return answerOverdue();
-  if (/unusual|anomal|outlier|suspicious|strange|odd\b/.test(text)) return answerUnusual();
-  if (/ticket|support|complaint|helpdesk/.test(text)) return answerTickets();
-  if (/task|approval|approve|to-?do/.test(text)) return answerTasks();
-  if (/region|country|territor|\bapac\b|europe|america/.test(text)) return answerRegions();
-  if (/(top|best|biggest|largest|key)\b.*(customer|client|account)/.test(text)) return answerTopCustomers();
-  if (/customer|client/.test(text)) return answerCustomers();
-  if (/revenue|sales|income|earning|turnover/.test(text)) return answerRevenue();
-  if (/order/.test(text)) return answerOrders();
+  if (orderRef) return answerOrderLookup(ws, orderRef[1]);
+  if (/\b(mis|report|summary|overview)\b/.test(text)) return answerReport(ws);
+  if (/overdue|unpaid|outstanding|pending payment|late payment/.test(text)) return answerOverdue(ws);
+  if (/unusual|anomal|outlier|suspicious|strange|odd\b/.test(text)) return answerUnusual(ws);
+  if (/ticket|support|complaint|helpdesk/.test(text)) return answerTickets(ws);
+  if (/task|approval|approve|to-?do/.test(text)) return answerTasks(ws);
+  if (/region|country|territor|\bapac\b|europe|america/.test(text)) return answerRegions(ws);
+  if (/(top|best|biggest|largest|key)\b.*(customer|client|account)/.test(text)) return answerTopCustomers(ws);
+  if (/customer|client/.test(text)) return answerCustomers(ws);
+  if (/revenue|sales|income|earning|turnover/.test(text)) return answerRevenue(ws);
+  if (/order/.test(text)) return answerOrders(ws);
   if (/product|item|sku|inventory|stock/.test(text)) {
     return { reply: "This workspace doesn't track products yet — orders are recorded by customer and amount only. I can show top customers or revenue instead." };
   }
@@ -347,7 +353,7 @@ router.post("/ask", async (req, res) => {
   const message = String((req.body || {}).message || "").trim();
   if (!message) return res.status(400).json({ error: "Type a question first." });
   if (message.length > 500) return res.status(400).json({ error: "That question is too long." });
-  res.json(await answer(message));
+  res.json(await answer(req.workspaceId, message));
 });
 
 module.exports = router;

@@ -7,7 +7,8 @@ router.use(requireAuth, requireEditor);
 
 router.get("/", async (req, res) => {
   const result = await pool.query(
-    `SELECT id, name, category, connected, created_at FROM integrations ORDER BY category, id`
+    `SELECT id, name, category, connected, created_at FROM integrations WHERE workspace_id = $1 ORDER BY category, id`,
+    [req.workspaceId]
   );
   res.json({ integrations: result.rows });
 });
@@ -18,9 +19,9 @@ router.get("/", async (req, res) => {
 // admin (see backend/.env.example for the pattern used elsewhere).
 router.put("/:id/toggle", async (req, res) => {
   const result = await pool.query(
-    `UPDATE integrations SET connected = NOT connected WHERE id = $1
+    `UPDATE integrations SET connected = NOT connected WHERE id = $1 AND workspace_id = $2
      RETURNING id, name, category, connected, created_at`,
-    [req.params.id]
+    [req.params.id, req.workspaceId]
   );
   if (!result.rows.length) return res.status(404).json({ error: "Integration not found." });
   res.json({ integration: result.rows[0] });

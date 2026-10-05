@@ -93,6 +93,36 @@
 
     const signupForm = document.getElementById("signupForm");
     if (signupForm) {
+      // An invite link (signup.html?invite=CODE) joins an existing workspace
+      // instead of creating a new one.
+      let inviteCode = new URLSearchParams(window.location.search).get("invite");
+      if (inviteCode) {
+        const note = document.getElementById("inviteNote");
+        note.hidden = false;
+        note.textContent = "Checking your invite...";
+        fetch(`${window.API_BASE}/auth/invite/${encodeURIComponent(inviteCode)}`)
+          .then(async (res) => {
+            if (res.status === 404) {
+              // Only a definite "no such invite" drops the code. If the API is
+              // just slow or unreachable, keep it and let signup validate it.
+              inviteCode = null;
+              note.textContent =
+                "This invite link is no longer valid. Ask your admin for a new one, or continue to create your own workspace.";
+              return;
+            }
+            const data = await res.json();
+            note.textContent = "";
+            note.append("You've been invited to join ");
+            const name = document.createElement("b");
+            name.textContent = data.workspaceName;
+            note.append(name, ". Create your account to get access.");
+            document.getElementById("signupSub").textContent = "Join your team on Business Assistant.";
+          })
+          .catch(() => {
+            note.textContent = "You're signing up with an invite link.";
+          });
+      }
+
       signupForm.addEventListener("submit", (e) => {
         e.preventDefault();
         clearFieldErrors(signupForm);
@@ -121,6 +151,7 @@
             company: company.value.trim(),
             email: email.value.trim(),
             password: password.value,
+            inviteCode: inviteCode || undefined,
           },
           signupForm.querySelector('button[type="submit"]')
         );

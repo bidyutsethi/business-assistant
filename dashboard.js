@@ -97,6 +97,13 @@
 
       document.getElementById("insightText").textContent = insights.insight;
       document.getElementById("riskText").textContent = insights.risk;
+
+      // A workspace with no customers is brand new: offer a way to start.
+      document.getElementById("dashWelcome").hidden = summary.customers > 0;
+      if (summary.customers === 0) {
+        const { user } = await baFetch("/auth/me");
+        document.getElementById("loadSampleBtn").hidden = user.accessLevel !== "admin";
+      }
     } catch (err) {
       console.error(err);
       document.getElementById("dashError").hidden = false;
@@ -109,5 +116,23 @@
     }
   }
 
-  document.addEventListener("DOMContentLoaded", load);
+  document.addEventListener("DOMContentLoaded", () => {
+    load();
+
+    const sampleBtn = document.getElementById("loadSampleBtn");
+    sampleBtn.addEventListener("click", async () => {
+      sampleBtn.disabled = true;
+      sampleBtn.textContent = "Loading...";
+      try {
+        await baFetch("/team/sample-data", { method: "POST" });
+        showToast("Sample data loaded.", "success");
+        load();
+      } catch (err) {
+        showToast(err.message || "Couldn't load sample data.", "error");
+      } finally {
+        sampleBtn.disabled = false;
+        sampleBtn.textContent = "Load sample data";
+      }
+    });
+  });
 })();

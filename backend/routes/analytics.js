@@ -6,30 +6,35 @@ const router = express.Router();
 router.use(requireAuth);
 
 router.get("/", async (req, res) => {
+  const ws = [req.workspaceId];
   const [revenueTrend, ordersByStatus, revenueByRegion, customersByMonth, ticketTrend] = await Promise.all([
     pool.query(
       `SELECT to_char(date_trunc('month', created_at), 'Mon') AS month, SUM(amount) AS total
-       FROM orders WHERE created_at >= date_trunc('month', now()) - interval '5 months'
+       FROM orders WHERE workspace_id = $1 AND created_at >= date_trunc('month', now()) - interval '5 months'
        GROUP BY date_trunc('month', created_at)
-       ORDER BY date_trunc('month', created_at) ASC`
+       ORDER BY date_trunc('month', created_at) ASC`,
+      ws
     ),
-    pool.query(`SELECT status, COUNT(*)::int AS count FROM orders GROUP BY status`),
+    pool.query(`SELECT status, COUNT(*)::int AS count FROM orders WHERE workspace_id = $1 GROUP BY status`, ws),
     pool.query(
       `SELECT region, COALESCE(SUM(amount), 0) AS total FROM orders
-       WHERE created_at >= date_trunc('month', now()) - interval '5 months'
-       GROUP BY region ORDER BY total DESC`
+       WHERE workspace_id = $1 AND created_at >= date_trunc('month', now()) - interval '5 months'
+       GROUP BY region ORDER BY total DESC`,
+      ws
     ),
     pool.query(
       `SELECT to_char(date_trunc('month', created_at), 'Mon') AS month, COUNT(*)::int AS count
-       FROM customers WHERE created_at >= date_trunc('month', now()) - interval '5 months'
+       FROM customers WHERE workspace_id = $1 AND created_at >= date_trunc('month', now()) - interval '5 months'
        GROUP BY date_trunc('month', created_at)
-       ORDER BY date_trunc('month', created_at) ASC`
+       ORDER BY date_trunc('month', created_at) ASC`,
+      ws
     ),
     pool.query(
       `SELECT date_trunc('day', created_at) AS day, COUNT(*)::int AS count
-       FROM support_tickets WHERE created_at >= now() - interval '30 days'
+       FROM support_tickets WHERE workspace_id = $1 AND created_at >= now() - interval '30 days'
        GROUP BY date_trunc('day', created_at)
-       ORDER BY date_trunc('day', created_at) ASC`
+       ORDER BY date_trunc('day', created_at) ASC`,
+      ws
     ),
   ]);
 

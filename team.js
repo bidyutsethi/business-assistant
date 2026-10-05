@@ -1,5 +1,6 @@
-// Team page: lists every registered user. Admins can also change each
-// person's access level, reset their password, or remove them.
+// Team page: lists everyone in the workspace. Admins can also invite people
+// with a link, change each person's access level, reset their password, or
+// remove them.
 (function () {
   const dateFmt = new Intl.DateTimeFormat("en-US", { year: "numeric", month: "short", day: "numeric" });
 
@@ -12,6 +13,13 @@
   }
 
   let me = null;
+
+  function showInvite(inviteCode) {
+    const url = new URL("signup.html", window.location.href);
+    url.searchParams.set("invite", inviteCode);
+    document.getElementById("inviteLink").value = url.toString();
+    document.getElementById("invitePanel").hidden = false;
+  }
 
   function accessCell(m) {
     if (me.accessLevel !== "admin") return escapeHtml(ACCESS_LABELS[m.access_level] || m.access_level);
@@ -39,6 +47,8 @@
       const data = await baFetch("/team");
       me = data.me;
       document.getElementById("teamAdminNote").hidden = me.accessLevel === "admin";
+      document.getElementById("workspaceName").textContent = data.workspace.name;
+      if (data.workspace.inviteCode) showInvite(data.workspace.inviteCode);
       tbody.innerHTML = data.members
         .map(
           (m) => `
@@ -109,6 +119,26 @@
         } catch (err) {
           showToast(err.message || "Couldn't remove this team member.", "error");
         }
+      }
+    });
+
+    document.getElementById("inviteCopyBtn").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(document.getElementById("inviteLink").value);
+        showToast("Invite link copied.", "success");
+      } catch (err) {
+        showToast("Couldn't copy — select the link and copy it manually.", "error");
+      }
+    });
+
+    document.getElementById("inviteResetBtn").addEventListener("click", async () => {
+      if (!confirm("Make a new invite link? The current link will stop working.")) return;
+      try {
+        const { inviteCode } = await baFetch("/team/invite/regenerate", { method: "POST" });
+        showInvite(inviteCode);
+        showToast("New invite link ready. The old one no longer works.", "success");
+      } catch (err) {
+        showToast(err.message || "Couldn't make a new link.", "error");
       }
     });
 

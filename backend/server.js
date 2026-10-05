@@ -5,6 +5,7 @@ const express = require("express");
 const cors = require("cors");
 
 const pool = require("./db");
+const { migrateLegacyData } = require("./workspaces");
 const authRoutes = require("./routes/auth");
 const dashboardRoutes = require("./routes/dashboard");
 const adminRoutes = require("./routes/admin");
@@ -68,16 +69,7 @@ app.use((err, req, res, next) => {
 async function ensureSchema() {
   const schemaSql = fs.readFileSync(path.join(__dirname, "schema.sql"), "utf8");
   await pool.query(schemaSql);
-
-  // Workspaces created before access levels existed have no admin — hand it
-  // to the earliest account so someone can manage the team.
-  const admins = await pool.query(`SELECT id FROM users WHERE access_level = 'admin' LIMIT 1`);
-  if (!admins.rows.length) {
-    const first = await pool.query(`SELECT id FROM users ORDER BY id ASC LIMIT 1`);
-    if (first.rows.length) {
-      await pool.query(`UPDATE users SET access_level = 'admin' WHERE id = $1`, [first.rows[0].id]);
-    }
-  }
+  await migrateLegacyData();
 }
 
 const port = process.env.PORT || 4000;

@@ -27,7 +27,17 @@
       <div class="page-head">
         <div>
           <h1>Team</h1>
-          <p>Everyone with access to this Business Assistant workspace.</p>
+          <p>Everyone with access to <b id="workspaceName">this workspace</b>. Its data is private to the people listed here.</p>
+        </div>
+      </div>
+
+      <div class="panel" id="invitePanel" hidden style="margin-bottom:24px;">
+        <div class="panel-head"><h4>Invite teammates</h4></div>
+        <p style="font-size:13.5px;color:var(--navy-700);line-height:1.6;margin-bottom:14px;">Send this link to the people you want in this workspace. Anyone who signs up with it joins as a Member and sees this workspace's data, so share it privately.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <div class="field" style="flex:1;min-width:240px;margin-bottom:0;"><input type="text" id="inviteLink" readonly onclick="this.select()"></div>
+          <button type="button" class="btn btn-primary btn-sm" id="inviteCopyBtn">Copy link</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="inviteResetBtn">Make a new link</button>
         </div>
       </div>
 
@@ -44,8 +54,8 @@
           </table>
         </div>
       </div>
-      <p style="font-size:12.5px;color:var(--slate-400);margin-top:14px;"><b>Admins</b> manage the team, <b>Members</b> can add and edit data, and <b>Viewers</b> can only look. This workspace doesn't yet separate accounts by company — every signed-up user appears here and joins as a Member.</p>
-      <p id="teamAdminNote" hidden style="font-size:12.5px;color:var(--slate-400);margin-top:8px;">Only an admin can change access, reset passwords or remove people.</p>
+      <p style="font-size:12.5px;color:var(--slate-400);margin-top:14px;"><b>Admins</b> manage the team, <b>Members</b> can add and edit data, and <b>Viewers</b> can only look. People who sign up on their own get a separate workspace of their own; only those who use your invite link join this one.</p>
+      <p id="teamAdminNote" hidden style="font-size:12.5px;color:var(--slate-400);margin-top:8px;">Only an admin can invite people, change access, reset passwords or remove them.</p>
     </div>
   </main>
 </div>

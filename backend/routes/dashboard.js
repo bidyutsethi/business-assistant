@@ -11,6 +11,7 @@ function pctChange(curr, prev) {
 }
 
 router.get("/summary", async (req, res) => {
+  const ws = [req.workspaceId];
   const [
     revenueRows,
     prevRevenueRows,
@@ -24,34 +25,42 @@ router.get("/summary", async (req, res) => {
   ] = await Promise.all([
     pool.query(
       `SELECT COALESCE(SUM(amount), 0) AS total FROM orders
-       WHERE date_trunc('month', created_at) = date_trunc('month', now())`
+       WHERE workspace_id = $1 AND date_trunc('month', created_at) = date_trunc('month', now())`,
+      ws
     ),
     pool.query(
       `SELECT COALESCE(SUM(amount), 0) AS total FROM orders
-       WHERE date_trunc('month', created_at) = date_trunc('month', now() - interval '1 month')`
+       WHERE workspace_id = $1 AND date_trunc('month', created_at) = date_trunc('month', now() - interval '1 month')`,
+      ws
     ),
     pool.query(
       `SELECT COUNT(*) AS count FROM orders
-       WHERE date_trunc('month', created_at) = date_trunc('month', now())`
+       WHERE workspace_id = $1 AND date_trunc('month', created_at) = date_trunc('month', now())`,
+      ws
     ),
     pool.query(
       `SELECT COUNT(*) AS count FROM orders
-       WHERE date_trunc('month', created_at) = date_trunc('month', now() - interval '1 month')`
+       WHERE workspace_id = $1 AND date_trunc('month', created_at) = date_trunc('month', now() - interval '1 month')`,
+      ws
     ),
     pool.query(
-      `SELECT COUNT(*) AS count FROM customers WHERE created_at <= date_trunc('month', now()) + interval '1 month'`
+      `SELECT COUNT(*) AS count FROM customers WHERE workspace_id = $1 AND created_at <= date_trunc('month', now()) + interval '1 month'`,
+      ws
     ),
     pool.query(
-      `SELECT COUNT(*) AS count FROM customers WHERE created_at <= date_trunc('month', now())`
+      `SELECT COUNT(*) AS count FROM customers WHERE workspace_id = $1 AND created_at <= date_trunc('month', now())`,
+      ws
     ),
     pool.query(
-      `SELECT COUNT(*) AS count FROM support_tickets WHERE created_at >= now() - interval '7 days'`
+      `SELECT COUNT(*) AS count FROM support_tickets WHERE workspace_id = $1 AND created_at >= now() - interval '7 days'`,
+      ws
     ),
     pool.query(
       `SELECT COUNT(*) AS count FROM support_tickets
-       WHERE created_at >= now() - interval '14 days' AND created_at < now() - interval '7 days'`
+       WHERE workspace_id = $1 AND created_at >= now() - interval '14 days' AND created_at < now() - interval '7 days'`,
+      ws
     ),
-    pool.query(`SELECT COUNT(*) AS count FROM tasks WHERE status != 'done'`),
+    pool.query(`SELECT COUNT(*) AS count FROM tasks WHERE workspace_id = $1 AND status != 'done'`, ws),
   ]);
 
   const revenue = Number(revenueRows.rows[0].total);
@@ -82,9 +91,10 @@ router.get("/revenue-trend", async (req, res) => {
     `SELECT to_char(date_trunc('month', created_at), 'Mon') AS month,
             SUM(amount) AS total
      FROM orders
-     WHERE created_at >= date_trunc('month', now()) - interval '5 months'
+     WHERE workspace_id = $1 AND created_at >= date_trunc('month', now()) - interval '5 months'
      GROUP BY date_trunc('month', created_at)
-     ORDER BY date_trunc('month', created_at) ASC`
+     ORDER BY date_trunc('month', created_at) ASC`,
+    [req.workspaceId]
   );
   res.json({ trend: result.rows.map((r) => ({ month: r.month, revenue: Number(r.total) })) });
 });
@@ -94,15 +104,18 @@ router.get("/recent-orders", async (req, res) => {
     `SELECT o.order_number, c.name AS customer_name, o.amount, o.status, o.created_at
      FROM orders o
      JOIN customers c ON c.id = o.customer_id
+     WHERE o.workspace_id = $1
      ORDER BY o.created_at DESC
-     LIMIT 6`
+     LIMIT 6`,
+    [req.workspaceId]
   );
   res.json({ orders: result.rows });
 });
 
 router.get("/tasks", async (req, res) => {
   const result = await pool.query(
-    `SELECT id, title, status FROM tasks WHERE status != 'done' ORDER BY created_at DESC LIMIT 6`
+    `SELECT id, title, status FROM tasks WHERE workspace_id = $1 AND status != 'done' ORDER BY created_at DESC LIMIT 6`,
+    [req.workspaceId]
   );
   res.json({ tasks: result.rows });
 });
@@ -111,10 +124,11 @@ router.get("/insights", async (req, res) => {
   const regionResult = await pool.query(
     `SELECT region, COUNT(*) AS count
      FROM support_tickets
-     WHERE created_at >= now() - interval '7 days'
+     WHERE workspace_id = $1 AND created_at >= now() - interval '7 days'
      GROUP BY region
      ORDER BY count DESC
-     LIMIT 1`
+     LIMIT 1`,
+    [req.workspaceId]
   );
   const topRegion = regionResult.rows[0];
 
@@ -122,7 +136,9 @@ router.get("/insights", async (req, res) => {
     `SELECT
        SUM(CASE WHEN created_at >= now() - interval '14 days' AND created_at < now() - interval '7 days' THEN amount ELSE 0 END) AS prev_week,
        SUM(CASE WHEN created_at >= now() - interval '7 days' THEN amount ELSE 0 END) AS curr_week
-     FROM orders`
+     FROM orders
+     WHERE workspace_id = $1`,
+    [req.workspaceId]
   );
   const g = growthResult.rows[0];
   const currWeek = Number(g.curr_week || 0);

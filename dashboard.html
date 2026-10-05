@@ -44,6 +44,16 @@
         <p id="dashErrorMsg">Showing sample values instead. Check that the API is running.</p>
       </div>
 
+      <div id="dashWelcome" class="panel" hidden style="margin-bottom:24px;">
+        <h4 style="font-size:16px;font-weight:650;margin-bottom:6px;">Welcome to your new workspace</h4>
+        <p style="font-size:14px;color:var(--navy-700);line-height:1.6;margin-bottom:16px;">It's empty and private to your team. Add your first customer to get started, or load sample data to see how everything looks first.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <a href="customers.html" class="btn btn-primary btn-sm">Add a customer</a>
+          <button type="button" class="btn btn-secondary btn-sm" id="loadSampleBtn" hidden>Load sample data</button>
+          <a href="team.html" class="btn btn-secondary btn-sm">Invite your team</a>
+        </div>
+      </div>
+
       <div class="kpi-row">
         <div class="kpi-card"><div class="label">Revenue</div><div class="value skeleton" id="kpiRevenue" style="height:28px;">&nbsp;</div><div class="delta" id="kpiRevenueDelta"></div></div>
         <div class="kpi-card"><div class="label">Orders</div><div class="value skeleton" id="kpiOrders" style="height:28px;">&nbsp;</div><div class="delta" id="kpiOrdersDelta"></div></div>

@@ -9,8 +9,8 @@ const STATUSES = ["new", "processing", "fulfilled", "overdue"];
 
 router.get("/", async (req, res) => {
   const { status, region } = req.query;
-  const conditions = [];
-  const params = [];
+  const conditions = ["o.workspace_id = $1"];
+  const params = [req.workspaceId];
 
   if (status && STATUSES.includes(status)) {
     params.push(status);
@@ -20,14 +20,13 @@ router.get("/", async (req, res) => {
     params.push(region);
     conditions.push(`o.region = $${params.length}`);
   }
-  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
   const result = await pool.query(
     `SELECT o.id, o.order_number, o.amount, o.status, o.region, o.created_at,
             o.customer_id, c.name AS customer_name
      FROM orders o
      JOIN customers c ON c.id = o.customer_id
-     ${where}
+     WHERE ${conditions.join(" AND ")}
      ORDER BY o.created_at DESC
      LIMIT 200`,
     params
@@ -45,16 +44,19 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ error: `Status must be one of: ${STATUSES.join(", ")}.` });
   }
 
-  const customer = await pool.query(`SELECT id, name, region FROM customers WHERE id = $1`, [customerId]);
+  const customer = await pool.query(`SELECT id, name, region FROM customers WHERE id = $1 AND workspace_id = $2`, [
+    customerId,
+    req.workspaceId,
+  ]);
   if (!customer.rows.length) return res.status(404).json({ error: "Customer not found." });
   const orderRegion = region || customer.rows[0].region;
 
   // order_number depends on the new row's id, so insert first, then stamp it.
   const inserted = await pool.query(
-    `INSERT INTO orders (order_number, customer_id, amount, status, region)
-     VALUES ('', $1, $2, $3, $4)
+    `INSERT INTO orders (workspace_id, order_number, customer_id, amount, status, region)
+     VALUES ($1, '', $2, $3, $4, $5)
      RETURNING id`,
-    [customerId, numAmount, status, orderRegion]
+    [req.workspaceId, customerId, numAmount, status, orderRegion]
   );
   const newId = inserted.rows[0].id;
   const orderNumber = `#${10420 + newId}`;
@@ -89,9 +91,9 @@ router.put("/:id", async (req, res) => {
   }
   if (!updates.length) return res.status(400).json({ error: "Nothing to update." });
 
-  params.push(req.params.id);
+  params.push(req.params.id, req.workspaceId);
   const result = await pool.query(
-    `UPDATE orders SET ${updates.join(", ")} WHERE id = $${params.length}
+    `UPDATE orders SET ${updates.join(", ")} WHERE id = $${params.length - 1} AND workspace_id = $${params.length}
      RETURNING id, order_number, amount, status, region, created_at, customer_id`,
     params
   );
@@ -101,7 +103,10 @@ router.put("/:id", async (req, res) => {
 });
 
 router.delete("/:id", async (req, res) => {
-  const result = await pool.query(`DELETE FROM orders WHERE id = $1 RETURNING id`, [req.params.id]);
+  const result = await pool.query(`DELETE FROM orders WHERE id = $1 AND workspace_id = $2 RETURNING id`, [
+    req.params.id,
+    req.workspaceId,
+  ]);
   if (!result.rows.length) return res.status(404).json({ error: "Order not found." });
   res.json({ status: "deleted" });
 });

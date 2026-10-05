@@ -19,14 +19,7 @@ async function main() {
   require("../server");
   await new Promise((r) => setTimeout(r, 500));
 
-  // Seed a realistic dataset via the admin endpoint (same one used in prod).
-  let res = await fetch(`${BASE}/api/admin/seed`, {
-    method: "POST",
-    headers: { "X-Seed-Key": "test-seed-key" },
-  });
-  check("seed for CRUD tests succeeds", res.status === 200);
-
-  res = await fetch(`${BASE}/api/auth/signup`, {
+  let res = await fetch(`${BASE}/api/auth/signup`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -39,6 +32,14 @@ async function main() {
   const { token } = await res.json();
   const auth = { Authorization: `Bearer ${token}` };
   const authJson = { ...auth, "Content-Type": "application/json" };
+
+  // Seed a realistic dataset into that account's workspace via the admin
+  // endpoint (same one used in prod).
+  res = await fetch(`${BASE}/api/admin/seed`, {
+    method: "POST",
+    headers: { "X-Seed-Key": "test-seed-key" },
+  });
+  check("seed for CRUD tests succeeds", res.status === 200);
 
   // ---------------- Customers ----------------
   res = await fetch(`${BASE}/api/customers`, { headers: auth });
